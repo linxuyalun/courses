@@ -1,2 +1,2 @@
 # courses
-study in school
+study
