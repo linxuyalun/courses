@@ -2,3 +2,6 @@
 PPP-cn.pdf
 
 debug
+
+# igonore file in lab1_benchmark/source
+/sjtu/program-design/Lab/lab1/lab1_benchmark/source
