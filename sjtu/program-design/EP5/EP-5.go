@@ -66,22 +66,22 @@ func normalizeOrder(storeOrder itemList) []order {
 	for i := 0; i < len(storeOrder.List); i++ {
 		var a order
 		var err error
-		a.orderID = strings.TrimLeft(storeOrder.List[i][0], "orderid:")
-		a.createTime, err = strconv.Atoi(strings.TrimLeft(storeOrder.List[i][1], "createtime:"))
+		a.orderID = strings.TrimPrefix(storeOrder.List[i][0], "orderid:")
+		a.createTime, err = strconv.Atoi(strings.TrimPrefix(storeOrder.List[i][1], "createtime:"))
 		if err != nil {
 			panic(err)
 		}
-		a.buyerID = strings.TrimLeft(storeOrder.List[i][2], "buyerid:")
-		a.goodID = strings.TrimLeft(storeOrder.List[i][3], "goodid:")
+		a.buyerID = strings.TrimPrefix(storeOrder.List[i][2], "buyerid:")
+		a.goodID = strings.TrimPrefix(storeOrder.List[i][3], "goodid:")
 		// Note that "remark" is not required
 		if strings.HasPrefix(storeOrder.List[i][4], "remark:") {
-			a.remark = strings.TrimLeft(storeOrder.List[i][4], "remark:")
-			a.amount, err = strconv.Atoi(strings.TrimLeft(storeOrder.List[i][5], "amount:"))
+			a.remark = strings.TrimPrefix(storeOrder.List[i][4], "remark:")
+			a.amount, err = strconv.Atoi(strings.TrimPrefix(storeOrder.List[i][5], "amount:"))
 			if err != nil {
 				panic(err)
 			}
 		} else {
-			a.amount, err = strconv.Atoi(strings.TrimLeft(storeOrder.List[i][4], "amount:"))
+			a.amount, err = strconv.Atoi(strings.TrimPrefix(storeOrder.List[i][4], "amount:"))
 			if err != nil {
 				panic(err)
 			}
@@ -104,18 +104,18 @@ func normalizeGood(storeGood itemList) []good {
 	for i := 0; i < len(storeGood.List); i++ {
 		var a good
 		var err error
-		a.goodID = strings.TrimLeft(storeGood.List[i][0], "goodid:")
-		a.salerID = strings.TrimLeft(storeGood.List[i][1], "salerid:")
-		a.goodName = strings.TrimLeft(storeGood.List[i][2], "good_name:")
+		a.goodID = strings.TrimPrefix(storeGood.List[i][0], "goodid:")
+		a.salerID = strings.TrimPrefix(storeGood.List[i][1], "salerid:")
+		a.goodName = strings.TrimPrefix(storeGood.List[i][2], "good_name:")
 		// Note that "description" is not required.
 		if strings.HasPrefix(storeGood.List[i][3], "price:") {
-			a.price, err = strconv.ParseFloat(strings.TrimLeft(storeGood.List[i][3], "price:"), 64)
+			a.price, err = strconv.ParseFloat(strings.TrimPrefix(storeGood.List[i][3], "price:"), 64)
 			if err != nil {
 				panic(err)
 			}
 		} else {
-			a.description = strings.TrimLeft(storeGood.List[i][3], "description:")
-			a.price, err = strconv.ParseFloat(strings.TrimLeft(storeGood.List[i][4], "price:"), 64)
+			a.description = strings.TrimPrefix(storeGood.List[i][3], "description:")
+			a.price, err = strconv.ParseFloat(strings.TrimPrefix(storeGood.List[i][4], "price:"), 64)
 			if err != nil {
 				panic(err)
 			}
@@ -136,15 +136,15 @@ func normalizeBuyer(storeBuyer itemList) []buyer {
 	var list []buyer
 	for i := 0; i < len(storeBuyer.List); i++ {
 		var a buyer
-		a.buyerID = strings.TrimLeft(storeBuyer.List[i][0], "buyerid:")
+		a.buyerID = strings.TrimPrefix(storeBuyer.List[i][0], "buyerid:")
 		// Note that both contactPhone and address are not required.
 		for j := 1; j < 4; j++ {
 			if strings.HasPrefix(storeBuyer.List[i][j], "contactphone:") {
-				a.contactPhone = strings.TrimLeft(storeBuyer.List[i][j], "contactphone:")
+				a.contactPhone = strings.TrimPrefix(storeBuyer.List[i][j], "contactphone:")
 			} else if strings.HasPrefix(storeBuyer.List[i][j], "address:") {
-				a.address = strings.TrimLeft(storeBuyer.List[i][j], "address:")
+				a.address = strings.TrimPrefix(storeBuyer.List[i][j], "address:")
 			} else if strings.HasPrefix(storeBuyer.List[i][j], "buyername:") {
-				a.buyerName = strings.TrimLeft(storeBuyer.List[i][j], "buyername:")
+				a.buyerName = strings.TrimPrefix(storeBuyer.List[i][j], "buyername:")
 				break
 			}
 		}
