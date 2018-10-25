@@ -95,11 +95,10 @@ func normalizeOrder(storeOrder itemList) []order {
 }
 
 type good struct {
-	goodID      string
-	salerID     string
-	goodName    string
-	description string
-	price       float64
+	goodID   string
+	salerID  string
+	goodName string
+	price    float64
 }
 
 func normalizeGood(storeGood itemList) []good {
@@ -117,7 +116,6 @@ func normalizeGood(storeGood itemList) []good {
 				panic(err)
 			}
 		} else {
-			a.description = strings.TrimPrefix(storeGood.List[i][3], "description:")
 			a.price, err = strconv.ParseFloat(strings.TrimPrefix(storeGood.List[i][4], "price:"), 64)
 			if err != nil {
 				panic(err)
@@ -300,7 +298,7 @@ func main() {
 	}
 
 	// Give a buyer id, judge the type of buyer and find the buyers whose consumption behaviour are the same
-	buyerID := "ap-a6e3-6a209583bd76"
+	buyerID := "ap-bf11-8ff973e02aaf"
 	fmt.Printf("The buyer %v is type %v \n", buyerID, buyerConsumptionBehaviour[buyerID].buyerType)
 	fmt.Printf("The fllowing buyers have the same consumption behaviour of %v :\n", buyerID)
 	for key, value := range buyerConsumptionBehaviour {
