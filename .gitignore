@@ -1,7 +1,8 @@
 # doc
 PPP-cn.pdf
+/sjtu/resource-mgt-infra/*.pdf
 
 debug
 
-# igonore file in lab1_benchmark/source
+# igonore some file
 /sjtu/program-design/Lab/lab1/lab1_benchmark/source
