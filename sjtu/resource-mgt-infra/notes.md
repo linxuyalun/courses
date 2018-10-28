@@ -12,12 +12,11 @@
 * Sparrow: Distributed, Low Latency Scheduling. 
 * Large-scale cluster management at Google with Borg.
 * The power of two choices in randomized load balancing
-
-- A Generalization of Multiple Choice Balls-into-Bins.
-- Hawk: Hybrid Datacenter Scheduling
-- Mercury: Hybrid Centralized and Distributed Scheduling in Large Shared Clusters
-- Running Spark on Kubernetes
-- Apache Spark 2.3 with Native Kubernetes Support
+* A Generalization of Multiple Choice Balls-into-Bins.
+* Hawk: Hybrid Datacenter Scheduling
+* Mercury: Hybrid Centralized and Distributed Scheduling in Large Shared Clusters
+* Running Spark on Kubernetes
+* Apache Spark 2.3 with Native Kubernetes Support
 
 
 
