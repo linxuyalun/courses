@@ -5,7 +5,7 @@
 * Mesos, Omega, Borg: A Survey
 * Recent Developments in Resource Management in Cloud Computing and Large Computing Clusters. 
 * Mesos: a platform for fine-grained resource sharing in the data center.
-* [MapReduce](### MapReduce)
+* [MapReduce](#MapReduce)
 * Apache Hadoop YARN: Yet Another Resource Negotiator
 * Omega: flexible, scalable schedulers for large compute clusters. 
 * Apollo: Scalable and Coordinated Scheduling for Cloud-Scale Computing.
