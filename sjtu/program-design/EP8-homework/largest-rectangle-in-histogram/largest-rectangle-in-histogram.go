@@ -5,7 +5,7 @@ import (
 	"fmt"
 )
 
-// For explanation, please see http://www.geeksforgeeks.org/largest-rectangle-under-histogram/
+// For explanation, please see https://www.youtube.com/watch?v=RVIh0snn4Qc
 func main() {
 	histogram := [8]int{1, 2, 3, 4, 5, 3, 3, 6}
 
