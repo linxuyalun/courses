@@ -7,7 +7,7 @@ import (
 
 func main() {
 
-	var b = [8]int{0, 1, 0, 1, 2, 1, 3, 2}
+	var b = [8]int{3, 4, 5, 3, 4, 2, 6, 0}
 	// ans is the sum of water, i is the index of array
 	var ans, i int
 
@@ -21,8 +21,7 @@ func main() {
 		if stack.Len() != 0 && b[i] > b[stack.Front().Value.(int)] {
 			// pop
 			bottomIndex := stack.Remove(stack.Front()).(int)
-			length := i - bottomIndex
-			var height int
+			var height, length int
 			if stack.Len() != 0 {
 				if b[stack.Front().Value.(int)] > b[i] {
 					height = b[i] - b[bottomIndex]
@@ -32,6 +31,7 @@ func main() {
 			} else {
 				continue
 			}
+			length = i - stack.Front().Value.(int) - 1
 			ans += length * height
 		} else {
 			// push
