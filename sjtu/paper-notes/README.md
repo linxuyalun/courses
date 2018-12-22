@@ -1,6 +1,6 @@
 # Contents
 
-##Resource Management Infra
+## Resource Management Infra
 
 * The evolution of cluster scheduler architectures.
 * Mesos, Omega, Borg: A Survey
