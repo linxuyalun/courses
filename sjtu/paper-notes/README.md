@@ -21,7 +21,7 @@
 
 ## Serverless Computing
 
-- [Peeking Behind the Curtains of Serverless Platforms](serverless-computing/Peeking Behind the Curtains of Serverless Platforms.md)
+- [Peeking Behind the Curtains of Serverless Platforms](serverless-computing/peeking-behind-the-curtains-of-serverless-platforms.md)
 - Understanding Ephemeral Storage for Serverless Analytics
 - Pocket Elastic Ephemeral Storage for Serverless Analytics
 - SOCK Rapid Task Provisioning with Serverless-Optimized Containers
