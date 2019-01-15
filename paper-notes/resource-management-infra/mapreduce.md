@@ -2,13 +2,13 @@
 
 - [MapReduce: Simplified Data Processing on Large Clusters](https://static.googleusercontent.com/media/research.google.com/zh-CN//archive/mapreduce-osdi04.pdf)
 
-MapReduce是Google 在OSDI 2004年发表的一篇文章，在看完之后发现有一篇完整的[译文](https://www.aliyun.com/zixun/wenji/1284918.html)。
+Google三大马车之一MapReduce，在看完之后发现有一篇完整的[译文](https://www.aliyun.com/zixun/wenji/1284918.html)。
 
 作者和许多其他人在MapReduce提出之前为了处理海量原始数据（raw data）时发现想要在合理的时间内完成计算只有在上千台机器上分布式并行处理。这带来了三个复杂的问题：如何处理并行计算？如何分发数据？如何处理故障？解决这些问题需要大量的代码处理。
 
 MapReduce就是根据以上问题设计的一个抽象模型。使用MapReduce模型，开发人员只需要表示他们想要执行的操作，而不必关心并行计算、容错、 数据分布、负载均衡等复杂细节，这些问题都被封装在了MapReduce库。
 
-MapReduce就是一个可以处理和生成超大数据集的编程模型。原理是利用一个输入键值对集合来产生一个输出的键值对集合。MapReduce库的用户用两个函数表达这个计算：`Map`和`Reduce`。`Map`函数用来接收一个键值对然后生成**一组**中间键值对，然后在所有具有相同中间key的中间value上应用`Reduce`操作，合并中间的数据，得到一个想要的结果。
+MapReduce就是一个可以处理和生成超大数据集的编程模型。原理是利用一个**输入键值对集合**来产生一个**输出的键值对集合**。MapReduce库的用户用两个函数表达这个计算：`Map`和`Reduce`。`Map`函数用来接收一个键值对然后生成**一组**中间键值对，然后在所有具有相同中间key的中间value上应用`Reduce`操作，合并中间的数据，得到一个想要的结果。
 
 文章举例了一些十分适合用MapReduce的模型，比如：
 
@@ -17,8 +17,6 @@ MapReduce就是一个可以处理和生成超大数据集的编程模型。原�
 - 反索引：`Map`函数分析每个文档输出一个`(word,Document ID)`的列表,`Reduce`函数的输入是一个给定词的所有`(word,Document ID)`，排序所有的文档ID，输出`(word,list(Document ID)`。所有的输出集合形成一个简单的反索引。
 
 以下关于实现细节具体展开：
-
-MapReduce接口的许多不同实现都是可能的。 正确的选择取决于环境。这一节讲了Google计算环境上的实现：通过交换式以太网连接在一起的大型商用PC集群。这个环境有一些特点，具体见论文
 
 ## 并行计算：
 
