@@ -2,7 +2,7 @@
 PPP-cn.pdf
 /sjtu/paper-notes/serverless-computing/*.pdf
 /sjtu/paper-notes/resource-management-infra/*.pdf
-
+/sjtu/paper-notes/manuscript
 debug
 
 # igonore some file
