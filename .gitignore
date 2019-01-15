@@ -1,9 +1,3 @@
 # doc
-PPP-cn.pdf
-/sjtu/paper-notes/serverless-computing/*.pdf
-/sjtu/paper-notes/resource-management-infra/*.pdf
-/sjtu/paper-notes/manuscript
+/paper-notes/manuscript
 debug
-
-# igonore some file
-/sjtu/program-design/Lab/lab1/lab1_benchmark/source
