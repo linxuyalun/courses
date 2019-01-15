@@ -2,7 +2,8 @@
 
 ## Resource Management Infra
 
-* The evolution of cluster scheduler architectures.
+* [The Google File System](resource-management-infra/gfs.md)
+* The evolution of cluster scheduler architectures
 * Mesos, Omega, Borg: A Survey
 * Recent Developments in Resource Management in Cloud Computing and Large Computing Clusters. 
 * Mesos: a platform for fine-grained resource sharing in the data center.
