@@ -2,12 +2,13 @@
 
 ## Resource Management Infra
 
+* [Distributed systems for fun and profit](resource-management-infra/distributed-systems.md)
 * [The Google File System](resource-management-infra/gfs.md)
+* [MapReduce](resource-management-infra/mapreduce.md)
 * The evolution of cluster scheduler architectures
 * Mesos, Omega, Borg: A Survey
 * Recent Developments in Resource Management in Cloud Computing and Large Computing Clusters. 
-* Mesos: a platform for fine-grained resource sharing in the data center.
-* [MapReduce](resource-management-infra/mapreduce.md)
+* Mesos: a platform for fine-grained resource sharing in the data center
 * YARN
 * Omega: flexible, scalable schedulers for large compute clusters. 
 * Apollo: Scalable and Coordinated Scheduling for Cloud-Scale Computing.
