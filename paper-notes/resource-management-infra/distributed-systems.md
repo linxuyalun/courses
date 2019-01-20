@@ -521,3 +521,346 @@ CAP中的“C”是“强一致性”，但“consistency”不是“strong cons
 - [Life Beyond Distributed Transactions: an Apostate's Opinion](http://scholar.google.com/scholar?q=Life+Beyond+Distributed+Transactions%3A+an+Apostate%27s+Opinion) - Helland, 2007
 - [If you have too much data, then 'good enough' is good enough](http://dl.acm.org/citation.cfm?id=1953140) - Helland, 2011
 - [Building on Quicksand](http://scholar.google.com/scholar?q=Building+on+Quicksand) - Helland & Campbell, 2009
+
+# 3. Time and order
+
+What is order and why is it important?
+
+What do you mean "what is order"?
+
+我的意思是，为什么我们一开始就如此关注于顺序？为什么我们关心A是否发生在B之前？为什么我们不关心其他的属性，比如“颜色”？
+
+正如你可能记得的，我将分布式编程描述为：
+
+> The art of solving the same problem that you can solve on a single computer using multiple computers.
+
+事实上，这就是为什么分布式编程如此关注顺序。任何一次只能做一件事的系统都将创建一个操作的总顺序。就像人们通过一扇门一样，每一个行动都将有一个明确的前驱和后继者。这基本上就是我们努力维护的编程模型。
+
+传统的模式是：在一个CPU上运行一个程序、一个进程、一个内存空间。操作系统抽象出这样一个事实：可能有多个CPU和多个程序，并且计算机上的内存实际上在许多程序之间共享。我不是说线程编程和面向事件的编程不存在；只是它们是“one/one/one”模型之上的特殊抽象。程序是按顺序执行的：从顶部开始，然后向下进入底部。
+
+顺序作为一种属性受到了如此多的关注，因为定义“正确性”的最简单方法是说“它像在一台机器上那样工作”。这通常意味着a）我们运行相同的操作，b）我们以相同的顺序运行它们——即使有多台机器。
+
+保持顺序的分布式系统（定义为单个系统）的好处在于它们是通用的。不需要关心这些操作是什么，因为它们将像在一台机器上一样执行。这很好，因为这样无论操作是什么，都可以使用相同的系统。
+
+实际上，一个分布式程序在多个节点上运行；有多个CPU和多个操作流进入。你仍然可以分配一个总订单，但它需要精确的时钟或某种形式的通信。可以使用一个完全精确的时钟为每个操作设置时间戳，然后使用它计算出总顺序。或者，可能有某种通信系统，它可以按总顺序分配序列号。
+
+## Total and partial order
+
+分布式系统的自然状态是偏序的。无论是网络节点还是独立节点，都不能保证相对顺序；但是在每个节点上，都可以观察到本地顺序。
+
+全序是一个二进制关系，它定义了某个集合中每个元素的顺序。当其中一个元素大于另一个元素时，两个截然不同的元素是可比较的。在偏序的集合中，一些元素对是不可比较的，因此偏序并不指定每个项的确切顺序。
+
+全序和偏序都具有传递性和反对称性。对于X中的所有A、B和C，以下语句同时具有全序和偏序：
+
+```
+If a ≤ b and b ≤ a then a = b (反对称性);
+If a ≤ b and b ≤ c then a ≤ c (传递性);
+```
+
+但是，全序符合整体性：
+
+```
+a ≤ b or b ≤ a (整体性) for all a, b in X
+```
+
+偏序只符合自反性：
+
+```
+a ≤ a (自反性) for all a in X
+```
+
+请注意，整体性意味着自反性；因此部分顺序是整体顺序的较弱变体。对于偏序的某些元素，totality属性不成立——换句话说，有些元素是不可比的。
+
+Git Branch就是偏序的一个例子：
+
+```
+[ branch A (1,2,0)]  [ master (3,0,0) ]  [ branch B (1,0,2) ]
+[ branch A (1,1,0)]  [ master (2,0,0) ]  [ branch B (1,0,1) ]
+                  \  [ master (1,0,0) ]  /
+```
+
+分支A和分支B源于一个共同的祖先，但它们之间没有明确的顺序：它们代表不同的历史，如果没有额外的工作（合并），就不能简化为单一的线性历史。
+
+在一个由一个节点组成的系统中，全序是必要的：指令被执行，消息在一个程序中以一个特定的、可观察的顺序被处理。于是我们开始依赖于这个全序——它使程序的执行具有可预测性。这种顺序可以在分布式系统上维护，但代价是：通信成本高昂，时间同步困难且脆弱。
+
+## What is time?
+
+时间是顺序之源——它允许我们定义操作的顺序——巧合的是，它也有一种人们可以理解的解释（一秒钟、一分钟、一天等等）。
+
+在某种意义上，时间就像其他整数计数器一样。它恰好足够重要，大多数计算机都有一个专用的时间传感器，也就是时钟。这是非常重要的，我们已经找到了如何用一些不完善的物理系统（从蜡烛到铯原子）合成相同计数器的近似值。通过“综合”，我的意思是我们可以通过一些物理性质，在物理上遥远的地方近似整数计数器的值，而不需要直接通信。
+
+时间戳实际上是表示从宇宙开始到当前时刻的世界状态的一个速记值——如果某个事件发生在某个特定的时间戳上，那么它可能受到之前发生的所有事情的影响。这个想法可以概括为一个因果时钟，它明确地跟踪原因（依赖性），而不是简单地假设时间戳之前的所有内容都是相关的。当然，通常的假设是，我们只应该担心特定系统的状态，而不是整个世界。
+
+假设时间在任何地方都以相同的速度进行——这是一个很大的假设，我稍后将回到这个假设——时间和时间戳在程序中使用时有几个有用的解释。这三种解释是：
+
+* 顺序
+* 持续时间
+* 解释
+
+顺序。当我说时间是顺序之源，我的意思是：
+
+* 我们可以将时间戳附加到无序事件从而使它们有序；
+* 我们可以使用时间戳来强制执行特定的操作顺序或消息的传递（例如，如果操作无序到达则延迟操作）；
+* 我们可以使用时间戳的值来确定某事物是否在其他事物之前按时间顺序发生。
+
+解释。时间是一个普遍可比的价值。时间戳的绝对值可以解释为日期，这对人们很有用。
+
+持续时间。持续时间与现实世界有一定的关系。算法通常不关心时钟的绝对值或它作为日期的解释，但它们可能会使用持续时间来作出一些判断。特别是，等待所花费的时间量可以提供有关线索来判断系统是分区的还是仅仅经历高延迟。
+
+就其性质而言，分布式系统的组件的行为不可预测。它们不保证任何特定的顺序、增长率或延迟。每个节点都有一些本地命令——因为执行是（大致）连续的——但是这些本地命令彼此独立。
+
+当事情可以以任何顺序发生时，人类很难对事情进行推理——只是有太多的排列需要考虑。
+
+## Does time progress at the same rate everywhere?
+
+我们都有一个直观的时间概念，基于我们个人的经验。不幸的是，直观的时间概念使我们更容易描绘出总序而不是偏序。更容易想象事情发生的顺序，一个接一个，而不是同时发生。对一个消息顺序进行推理要比对以不同顺序和不同延迟到达的消息进行推理容易得多。
+
+然而，在实施分布式系统时，我们希望避免对时间和顺序做出强有力的假设，因为假设越强，系统就越容易受到“时间传感器”或车载时钟的问题的影响。此外，执行命令也会带来成本。我们越能容忍时间上的不确定性，就越能利用分布式计算。
+
+“每个地方的时间增长的速度都相同吗？”这个问题有3个答案。这些是：
+
+- "Global clock": yes
+- "Local clock": no, but
+- "No clock": no!
+
+这些大致符合我在第二章中提到的三个计时假设：同步系统模型有一个全局时钟，部分同步模型有一个本地时钟，在异步系统模型中，根本不能使用时钟。让我们更详细地看看这些。
+
+### Time with a "global-clock" assumption
+
+全球时钟的假设是有一个完全准确的全球时钟，并且每个人都可以使用该时钟。这是我们考虑时间的方式，因为在人类互动中，时间上的微小差异并不真正重要。
+
+![](http://book.mixu.net/distsys/images/global-clock.png)
+
+全局时钟基本上是全序的（所有节点上每个操作的确切顺序，即使这些节点从未通信过）。
+
+然而，这是一个理想化的世界观：在现实中，时钟同步只能在有限的精度范围内实现。这一点受到商品计算机时钟精度不足、使用NTP等时钟同步协议时的延迟以及时空本质的限制。
+
+假设分布式节点上的时钟是完全同步的，这意味着假设时钟以相同的值开始，并且永不分离。这是一个很好的假设，因为可以自由地使用时间戳来确定一个由时钟漂移而不是延迟约束的全局总顺序，但这是一个非常重要的操作挑战，也是一个潜在的异常源。有许多不同的场景，其中一个简单的故障——例如用户意外地更改了机器上的本地时间，或者过时的机器加入了一个集群，或者同步时钟以稍微不同的速率漂移，等等，这可能导致难以跟踪的异常。
+
+然而，有一些现实世界的系统做出了这个假设。Facebook的[Cassandra](http://en.wikipedia.org/wiki/Apache_Cassandra)就是一个假设时钟是同步的系统的例子。它使用时间戳来解决写入之间的冲突——使用新时间戳的写入操作将获胜。这意味着如果时钟漂移，新数据可能会被旧数据忽略或覆盖；同样，这是一个操作上的挑战（从我所听到的，人们敏锐地意识到的）。另一个有趣的例子是谷歌的Spanner：[本文](http://research.google.com/archive/spanner.html)描述了他们的TrueTimeAPI，它可以同步时间，但也可以估计最坏情况下的时钟漂移。
+
+### Time with a "Local-clock" assumption
+
+第二种可能更合理的假设是，每台机器都有自己的时钟，但没有全球时钟。这意味着不能使用本地时钟来确定远程时间戳是在本地时间戳之前还是之后发生的；换句话说，不能有意义地比较来自两台不同机器的时间戳。
+
+![](http://book.mixu.net/distsys/images/local-clock.png)
+
+本地时钟假设更接近于现实世界。它分配了一个偏序：每个系统上的事件都是有序的，但是不能只用一个时钟来跨系统对事件进行排序。
+
+但是，可以使用时间戳在单台计算机上订购事件。当然，在终端用户控制的机器上，假设太多了：例如，用户可能在使用操作系统的日期控件查找日期时意外地将其日期更改为其他值。
+
+### Time with a "No-clock" assumption
+
+最后，还有逻辑时间的概念。在这里，我们根本不使用时钟，而是以其他方式跟踪因果关系。记住，时间戳只是到世界状态某一瞬间的简写，因此我们可以使用计数器和通信来确定是否发生了什么事情，是之前、之后还是同时发生了什么事情。
+
+通过这种方式，我们可以确定不同机器之间事件的顺序，但不能谈论间隔，也不能使用超时（因为我们假设没有“时间传感器”）。这是偏序的：事件可以使用计数器在单个系统上进行排序，而无需通信，但跨系统排序事件需要消息交换。
+
+在分布式系统中引用最多的论文之一是Lamport关于时间、时钟和事件顺序的论文。矢量时钟，这一概念的概括（我将更详细地介绍），是一种不用时钟跟踪因果关系的方法。Cassandra的堂兄弟Riak（Basho）和Voldemort（LinkedIn）使用矢量时钟，而不是假设节点可以访问一个完全精确的全局时钟。这使得这些系统可以避免前面提到的时钟精度问题。
+
+当不使用时钟时，可以在远程机器上对事件进行排序的最大精度受通信延迟的限制。
+
+## How is time used in a distributed system?
+
+时间有什么好处？
+
+* 时间可以定义整个系统的顺序（无通信）
+* 时间可以定义算法的边界条件
+
+事件顺序在分布式系统中很重要，因为分布式系统的许多属性是根据操作/事件的顺序定义的：
+
+* 正确性取决于（协议）正确的事件排序，例如分布式数据库中的可序列化
+* 当资源争用发生时，可以将时间顺序用作判断，例如，如果窗口小部件有两个订单，则执行第一个订单并取消第二个订单
+
+全球时钟将允许在两台不同的机器上进行操作，而不需要两台机器直接通信。如果没有全球时钟，我们需要通信以确定顺序。
+
+时间还可以用来定义算法的边界条件——特别是区分“高延迟”和“服务器或网络链路关闭”。这是一个非常重要的用例；在大多数实际系统中，超时用于确定远程计算机是否发生故障，或者它是否只是经历了高网络延迟。做出这一决定的算法称为故障检测器；我将很快讨论它们。
+
+## Vector clocks (time for causal order)
+
+前面，我们讨论了关于分布式系统中时间进度的不同假设。假设我们不能实现精确的时钟同步——或者从我们的系统不应该对时间同步问题敏感的目标开始，我们如何排序？
+
+LAMPORT时钟和矢量时钟是物理时钟的替代品，它们依靠计数器和通信来确定分布式系统中事件的顺序。这些时钟提供了一个在不同节点之间可比较的计数器。
+
+Lamport时钟很简单。每个进程使用以下规则维护计数器：
+
+* 只要一个进程工作，就增加计数器
+* 每当进程发送消息时，计数器也会跟着发送
+* 收到消息时，将计数器设置为 `max(local_counter, received_counter) + 1`
+
+表达为代码：
+
+```
+function LamportClock() {
+  this.value = 1;
+}
+
+LamportClock.prototype.get = function() {
+  return this.value;
+}
+
+LamportClock.prototype.increment = function() {
+  this.value++;
+}
+
+LamportClock.prototype.merge = function(other) {
+  this.value = Math.max(this.value, other.value) + 1;
+}
+```
+
+一个lamport时钟允许在系统间比较计数器，但要注意：lamport时钟定义了一个偏序。如果 `timestamp(a) < timestamp(b)`：
+
+* a可能发生在b之前或
+* a可能与b无法比较
+
+这被称为时钟一致性条件：如果一个事件先于另一个事件，那么该事件的逻辑时钟先于其他事件。如果a和b来自同一因果历史，例如，两个时间戳值都是在同一进程上生成的；或者b是对a中发送的消息的响应，那么我们知道a发生在b之前。
+
+直观地说，这是因为lamport时钟只能携带一个时间线/历史的信息；因此，比较从不相互通信的系统的lamport时间戳可能会导致并发事件在不进行通信时看起来是有序的。
+
+想象一下这样一个系统，它在一个初始阶段之后分成两个独立的子系统，这些子系统从不相互通信。
+
+对于每个独立系统中的所有事件，如果a发生在b之前，则 `ts(a) < ts(b)`；但如果从不同独立系统中选取两个事件（例如，与因果关系无关的事件），则不能对它们的相对顺序说任何有意义的话。虽然系统的每个部分都为事件分配了时间戳，但这些时间戳彼此之间没有关系。两个事件似乎是有序的，即使它们是无关的。	
+
+然而，从一台机器的角度来看，这仍然是一个有用的属性，用 `ts(a)` 发送的任何消息都将收到一个用 `ts(b)` 发送的响应，该响应`> ts(a)`。
+
+矢量时钟是lamport时钟的一个扩展，它保持一个数组 `[ t1, t2, ... ]` 共n个逻辑时钟——每个节点一个。每个节点在每个内部事件上将向量中自己的逻辑时钟增加一个，而不是增加一个公共计数器。因此，更新规则是：
+
+* 只要进程工作，就增加向量中节点的逻辑时钟值
+* 每当进程发送消息时，逻辑时钟的完整向量也会跟着发送
+* 收到消息时：
+  * 将向量中的每个元素更新为 `max(local, received)`
+  * 增加表示矢量中当前节点的逻辑时钟值
+
+表达为代码：
+
+```
+function VectorClock(value) {
+  // expressed as a hash keyed by node id: e.g. { node1: 1, node2: 3 }
+  this.value = value || {};
+}
+
+VectorClock.prototype.get = function() {
+  return this.value;
+};
+
+VectorClock.prototype.increment = function(nodeId) {
+  if(typeof this.value[nodeId] == 'undefined') {
+    this.value[nodeId] = 1;
+  } else {
+    this.value[nodeId]++;
+  }
+};
+
+VectorClock.prototype.merge = function(other) {
+  var result = {}, last,
+      a = this.value,
+      b = other.value;
+  // This filters out duplicate keys in the hash
+  (Object.keys(a)
+    .concat(b))
+    .sort()
+    .filter(function(key) {
+      var isDuplicate = (key == last);
+      last = key;
+      return !isDuplicate;
+    }).forEach(function(key) {
+      result[key] = Math.max(a[key] || 0, b[key] || 0);
+    });
+  this.value = result;
+};
+```
+
+下图展示了一个矢量时钟的逻辑：
+
+![](http://book.mixu.net/distsys/images/vector_clock.svg.png)
+
+三个节点（A、B、C）中的每一个都跟踪矢量时钟。当事件发生时，它们用矢量时钟的当前值进行时间戳。通过检查向量时钟，如 `{ A: 2, B: 4, C: 1 }` ，我们可以准确地识别（可能）影响该事件的消息。
+
+矢量时钟的问题主要是它们需要每个节点一个条目，这意味着对于大型系统来说，它们可能会变得非常大。已经应用了各种技术来减小矢量时钟的大小（通过执行定期垃圾收集，或者通过限制大小来降低精度）。
+
+我们已经研究了如何在没有物理时钟的情况下跟踪顺序和因果关系。现在，让我们看看如何使用持续时间进行截止。
+
+## Failure detectors (time for cutoff)
+
+如我前面所述，等待所花费的时间量可以提供一个系统是分区的还是仅仅经历高延迟的线索。在这种情况下，我们不需要假设一个完全精确的全球时钟——只要有一个足够可靠的本地时钟就足够了。
+
+给定一个程序在一个节点上运行，它怎么能告诉远程节点失败了？在缺乏准确信息的情况下，我们可以推断在经过一段合理的时间后，一个没有响应的远程节点已经失败。
+
+但什么是“合理的数额”？这取决于本地和远程节点之间的延迟。与其显式地指定具有特定值的算法（在某些情况下不可避免地是错误的），不如处理适当的抽象。
+
+故障检测器是一种提取准确时间假设的方法。故障检测器使用心跳消息和计时器实现。程交换心跳消息。如果在超时发生之前没有收到消息响应，那么进程会怀疑另一个进程。
+
+基于超时的故障检测器将承担过度激进（声明节点发生故障）或过度保守（检测崩溃需要很长时间）的风险。故障检测器需要多精确才能使其可用？
+
+钱德拉等人（1996）在解决共识的背景下讨论故障检测器——这是一个特别相关的问题，因为它是大多数复制问题的基础，其中复制副本需要在具有延迟和网络分区的环境中一致。
+
+它们使用两个特性来描述故障检测器，即完整性和准确性：
+
+> Strong completeness: Every crashed process is eventually suspected by every correct process.
+>
+> Weak completeness: Every crashed process is eventually suspected by some correct process.
+>
+> Strong accuracy: No correct process is suspected ever.
+>
+> Weak accuracy: Some correct process is never suspected.
+
+完整性比准确性更容易实现；事实上，所有重要的故障检测器都能做到这一点——所需要做的就是不要永远怀疑某个进程。注意，具有弱完整性的故障检测器可以转换为具有强完整性的故障检测器（通过广播有关可疑过程的信息），从而使我们能够集中关注准确性的频谱。
+
+除非能够假设消息延迟有一个固定最大值，否则很难避免错误地怀疑正确的进程。这种假设可以在同步系统模型中进行，因此故障检测器在这种系统中可以非常精确。在不对消息延迟施加硬限制的系统模型下，故障检测最好的情况下最终会是准确的。
+
+钱德拉等人表明即使是非常弱的故障检测器——最终弱故障检测器W（准确性弱+完整性弱）也可以用来解决共识问题。下图说明了系统模型与问题解决能力之间的关系：
+
+![](http://book.mixu.net/distsys/images/chandra_failure_detectors.png)
+
+如您所见，在异步系统中，没有故障检测器，某些问题是无法解决的。这是因为如果没有故障检测器（或对时间界限的强假设，例如同步系统模型），就无法判断远程节点是否崩溃，或者只是经历了高延迟。这种崩溃或高延迟的区别对于任何旨在实现单一副本一致性的系统都很重要：失败的节点可以被忽略，因为它们不能导致分歧，但是分区节点不能被安全地忽略。
+
+如何实现故障检测器？从概念上讲，对于一个简单的故障检测器来说并没有什么，它只在超时结束时检测故障。最有趣的部分是如何判断远程节点是否失败。
+
+理想情况下，我们希望故障检测器能够适应不断变化的网络条件，并避免将超时值硬编码到其中。例如，Cassandra使用应计故障检测器，它是一个故障检测器，输出怀疑级别（介于0和1之间的值），而不是二进制“向上”或“向下”判断。这允许使用故障检测器的应用程序自行决定准确检测和早期检测之间的权衡。
+
+## Time, order and performance
+
+早些时候，我暗示必须支付顺序费用。什么意思？
+
+如果你正在编写分布式系统，那么你可能拥有多台计算机。世界的自然（和现实）观是一个偏序，而不是一个全序。可以将一个部分顺序转换为一个全序，但这需要通信、等待并施加限制，以限制有多少计算机可以在任何特定时间点工作。
+
+所有时钟都只是网络延迟（逻辑时间）或物理限制的近似值。即使在多个节点之间保持一个简单的整数计数器同步也是一个挑战。
+
+虽然时间和顺序经常在一起讨论，但时间本身并不是一个有用的属性。算法并不真正关心时间，而是关心更抽象的属性：
+
+* 事件的因果排序
+* 故障检测（例如，消息传递的上限近似值）
+* 一致的快照（例如，在某个时间点检查系统状态的能力;此处未讨论）
+
+实施一个全面的命令是可能的，但代价昂贵。它要求你以共同的（最低的）速度前进。通常，确保以某种定义的顺序传递事件的最简单方法是指定一个（瓶颈）节点，通过该节点传递所有操作。
+
+时间/顺序/同步性真的有必要吗？这要看情况而定。在某些用例中，我们希望每个中间操作将系统从一个一致状态移动到另一个一致状态。例如，在许多情况下，我们希望来自数据库的响应表示所有可用信息，并且希望避免处理如果系统返回不一致的结果可能发生的问题。
+
+但在其他情况下，我们可能不需要那么多时间/顺序/同步。例如，如果你运行的是长时间运行的计算，并且直到最后才真正关心系统的工作，那么只要能够保证答案是正确的，就不需要太多的同步。
+
+同步通常作为一种钝性工具应用于所有的操作，当只有一个子集的情况实际上对最终结果很重要时。何时需要顺序来保证正确性？我将在最后一章讨论的CALM定理提供一个答案。
+
+在其他情况下，给出一个估计的最好答案是可以接受的——也就是说，只基于系统中包含的全部信息的一个子集。特别是，在网络分区期间，可能需要在系统的一部分可访问的情况下回答查询。在其他用例中，最终用户甚至无法真正区分可以便宜获得的相对较新的答案和保证正确且计算成本较高的答案之间的区别。例如，某个用户X或X 1的Twitter关注者数量是多少？ 或者电影A，B和C是一些查询的绝对最佳答案？ 做一个更便宜，最正确的“尽力而为”是可以接受的。
+
+在接下来的两章中，我们将研究容错、强一致性系统的复制，这些系统在不断增强对故障的恢复能力的同时提供了强大的保证。当你需要保证正确性并愿意为此付出代价时，这些系统为第一种情况提供了解决方案。然后，我们将讨论具有弱一致性保证的系统，这些保证在分区面前仍然可用，但这只能给你一个“尽力而为”的答案。
+
+## Further reading
+
+### Lamport clocks, vector clocks
+
+- [Time, Clocks and Ordering of Events in a Distributed System](http://research.microsoft.com/users/lamport/pubs/time-clocks.pdf) - Leslie Lamport, 1978
+
+### Failure detection
+
+- [Unreliable failure detectors and reliable distributed systems](http://scholar.google.com/scholar?q=Unreliable+Failure+Detectors+for+Reliable+Distributed+Systems) - Chandra and Toueg
+- [Latency- and Bandwidth-Minimizing Optimal Failure Detectors](http://www.cs.cornell.edu/people/egs/sqrt-s/doc/TR2006-2025.pdf) - So & Sirer, 2007
+- [The failure detector abstraction](http://scholar.google.com/scholar?q=The+failure+detector+abstraction), Freiling, Guerraoui & Kuznetsov, 2011
+
+### Snapshots
+
+- [Consistent global states of distributed systems: Fundamental concepts and mechanisms](http://scholar.google.com/scholar?q=Consistent+global+states+of+distributed+systems%3A+Fundamental+concepts+and+mechanisms), Ozalp Babaogly and Keith Marzullo, 1993
+- [Distributed snapshots: Determining global states of distributed systems](http://scholar.google.com/scholar?q=Distributed+snapshots%3A+Determining+global+states+of+distributed+systems), K. Mani Chandy and Leslie Lamport, 1985
+
+### Causality
+
+- [Detecting Causal Relationships in Distributed Computations: In Search of the Holy Grail](http://www.vs.inf.ethz.ch/publ/papers/holygrail.pdf) - Schwarz & Mattern, 1994
+- [Understanding the Limitations of Causally and Totally Ordered Communication](http://scholar.google.com/scholar?q=Understanding+the+limitations+of+causally+and+totally+ordered+communication) - Cheriton & Skeen, 1993
