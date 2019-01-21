@@ -23,7 +23,7 @@
 
 ## Time and order
 
-理解分布式系统的一个重要部分是了解时间和顺序。 如果我们无法理解和模拟时间，我们的系统将会失败。 第三章讨论时间和顺序，时钟以及时间，顺序和时钟（如矢量时钟和故障检测器）的各种用途。
+理解分布式系统的一个重要部分是了解时间和顺序。 如果我们无法理解和模拟时间，我们的系统将会失败。 [第三章](#3-time-and-order)讨论时间和顺序，时钟以及时间，顺序和时钟（如矢量时钟和故障检测器）的各种用途。
 
 ## Replication: preventing divergence
 
@@ -864,3 +864,366 @@ VectorClock.prototype.merge = function(other) {
 
 - [Detecting Causal Relationships in Distributed Computations: In Search of the Holy Grail](http://www.vs.inf.ethz.ch/publ/papers/holygrail.pdf) - Schwarz & Mattern, 1994
 - [Understanding the Limitations of Causally and Totally Ordered Communication](http://scholar.google.com/scholar?q=Understanding+the+limitations+of+causally+and+totally+ordered+communication) - Cheriton & Skeen, 1993
+
+# 4. Replication
+
+复制问题是分布式系统中的许多问题之一。我选择把重点放在其他问题上，如leader选择、失败检测、互斥、共识和全局快照，因为这往往是人们最感兴趣的部分。例如，区分并行数据库的一种方法是根据其复制特性。此外，复制为许多子问题提供了上下文，例如leader选择、故障检测、共识和原子广播。
+
+复制是一个组通信问题。什么样的协议和通信模式能给我们期望的性能和可用性特征？面对网络分区和同时发生的节点故障，我们如何确保容错性、耐久性和无二义性？
+
+让我们首先定义复制。我们假设我们有一些初始数据库，并且客户机发出更改数据库状态的请求。
+
+![replication](http://book.mixu.net/distsys/images/replication-both.png)
+
+然后可以将协议和通信模式分为几个阶段：
+
+* （请求）客户端向服务器发送请求；
+* （同步）复制的同步部分发生
+* （响应）响应返回给客户端
+* （异步）复制的异步部分发生
+
+注意，在任务的每个部分中交换消息的模式取决于特定的算法，再次，我有意尝试在不讨论特定算法的情况下进行解释。
+
+考虑这些阶段，我们能创造什么样的通信模式？我们选择的模式对性能和可用性的影响是什么？
+
+## Synchronous replication
+
+第一种模式是同步复制（也被称为active复制、eager复制、push复制或悲观复制）。让我们画出它的样子：
+
+![replication](http://book.mixu.net/distsys/images/replication-sync.png)
+
+在这里，我们可以看到三个不同的阶段：首先，客户机发送请求。接下来，我们称之为复制的同步部分发生了。这个术语指的其实是客户机被阻塞——它要等待来自系统的回复。
+
+在同步阶段，第一个服务器与其他两个服务器联系，并等待，直到收到所有其他服务器的响应。最后，它向客户机发送一个响应，通知客户结果（例如成功或失败）。
+
+这一切似乎都很简单。在不讨论同步阶段算法的细节的情况下，对于这种特定的通信模式协议，我们能注意到什么？首先，注意这是一种按N/N写的方法：在返回响应之前，系统中的每个服务器都必须看到并确认它。
+
+从性能的角度来看，这意味着系统将和其中最慢的服务器一样快。系统还将对网络延迟的变化非常敏感，因为它要求每个服务器在继续操作之前都进行响应。
+
+考虑到N/N的方法，系统不能容忍任何服务器的丢失。当服务器丢失时，系统将无法再向所有节点写入数据，因此无法继续。它可能能够提供对数据的只读访问，但在此设计中节点失败后不允许进行修改。
+
+这种协议可以提供非常强的持久性保证：客户端可以确保在返回响应时，所有N个服务器都已接收、存储和确认请求。为了丢失一个已接受的更新，所有n个副本都需要丢失，这是一个尽可能好的保证。
+
+## Asynchronous replication
+
+让我们将其与第二种模式进行对比——异步复制（也就是被动复制、pull复制或lazy复制）。如你所料，这与同步复制相反：
+
+![replication](http://book.mixu.net/distsys/images/replication-async.png)
+
+在这里，主服务器（/leader/coordinator）会立即向客户机发送响应。它可能最多在本地存储更新，但不会同步地执行任何重要的工作，并且客户机不会被迫等待服务器之间发生更多轮的通信。
+
+在稍后的某个阶段，复制任务的异步部分将发生。在这里，主服务器使用某种通信模式与其他服务器联系，其他服务器更新其数据副本。具体情况取决于使用的算法。
+
+在不了解算法细节的情况下，我们能对这种特定的协议说些什么呢？好吧，这是一种1/N写的方法：响应立即返回，更新传播在稍后发生。
+
+从性能的角度来看，这意味着系统是快速的：客户机不需要花费任何额外的时间来等待系统的内部完成他们的工作。系统对网络延迟的容忍度也更高，因为内部延迟的波动不会导致客户端的额外等待。
+
+这种协议只能提供弱的耐久性保证。如果没有任何问题，数据最终会复制到所有n台机器上。但是，如果只有包含数据的服务器在发生这种情况之前丢失，则数据将永久丢失。
+
+如果采用1/N的方法，只要至少有一个节点打开，系统就可以保持可用（至少在理论上是这样，尽管在实践中，负载可能太高）。这样一种纯粹的懒惰方法不提供持久性或一致性保证；可以允许你向系统写入数据，但不能保证在出现任何错误时可以读回所写的内容。
+
+最后，值得注意的是，被动复制不能确保系统中的所有节点始终包含相同的状态。如果接受多个位置的写入，并且不要求这些节点同步约定，那么你将面临分歧的风险：读取可能会从不同位置返回不同的结果（尤其是在节点失败和恢复之后），并且无法强制执行全局约束（需要与所有节点通信）。
+
+我没有真正提到读（而不是写）过程中的通信模式，因为读的模式实际上是遵循写的模式：在读过程中，你希望联系尽可能少的节点。我们将在引言的上下文中对此进行更多的讨论。
+
+我们只讨论了两种基协议，没有涉及具体的算法。然而，我们已经能够对可能的通信模式以及它们的性能、耐久性保证和可用性特征进行相当多的了解。
+
+## An overview of major replication approaches
+
+在讨论了两种基本的复制方法：同步复制和异步复制之后，让我们看看主复制算法。
+
+对复制技术进行分类有很多种不同的方法。我想介绍的第二个区别（在同步与异步之后）是：
+
+* 防止分歧的复制方法（单副本系统）和
+* 有分歧风险的复制方法（多主副本系统）
+
+第一组方法具有“表现得像一个系统”的属性。特别是，当发生部分故障时，系统确保只有系统的一个副本处于活动状态。此外，系统确保副本始终一致。这就是所谓的共识问题。
+
+如果几个计算机（或节点）都同意一些价值，那么它们就会达成共识。更正式地说：
+
+- Agreement: Every correct process must agree on the same value.
+- Integrity: Every correct process decides at most one value, and if it decides some value, then it must have been proposed by some process.
+- Termination: All processes eventually reach a decision.
+- Validity: If all correct processes propose the same value V, then all correct processes decide V.
+
+互斥、leader选择、多播和原子广播都是更普遍的共识问题的实例。保持单一副本一致性的复制系统需要以某种方式解决一致性问题。
+
+保持单一副本一致性的复制算法包括：
+
+- 1n messages (asynchronous primary/backup)
+- 2n messages (synchronous primary/backup)
+- 4n messages (2-phase commit, Multi-Paxos)
+- 6n messages (3-phase commit, Paxos with repeated leader election)
+
+这些算法的容错性各不相同（例如，它们可以容忍的故障类型）。我只是根据算法执行过程中交换的消息数量对它们进行了分类，因为我认为尝试找到问题“我们通过增加消息交换的数量能获得什么？”的答案很有趣。
+
+以下图表改编自Google的Ryan Barret，描述了不同选项的一些方面：
+
+![Comparison of replication methods, from http://www.google.com/events/io/2009/sessions/TransactionsAcrossDatacenters.html](http://book.mixu.net/distsys/images/google-transact09.png)
+
+上图中的一致性、延迟、吞吐量、数据丢失和故障转移特性实际上可以追溯到两种不同的复制方法：同步复制（例如，在响应之前等待）和异步复制。当你等待的时候，你会得到更差的性能，但更有力的保证。当我们讨论分区（和延迟）容忍度时，2PC和Quorum系统之间的吞吐量差异将变得明显。
+
+在该图中，弱（即eventual）一致性的算法被集中到一个类别（“gossip”）。不过，我将更详细地讨论弱一致性（gossip和（部分）quorum系统）的复制方法。“transactions”实际上更多的是指全局谓词运算（如各种各样的运算符），这在一致性弱的系统中是不受支持的（尽管可以支持本地谓词运算）。
+
+值得注意的是，执行弱一致性需求的系统具有更少的通用算法，以及更多可选择性应用的技术。由于不强制执行单一副本一致性的系统可以像由多个节点组成的分布式系统一样自由工作，因此要解决的明显目标较少，重点更多的是为人们提供一种方法来解释他们所拥有的系统的特性。
+
+比如：
+
+* 以客户端为中心的一致性模型试图在允许分歧的同时提供更易于理解的一致性保证。
+* CRDT（收敛和交换复制数据类型）利用特定状态和基于操作的数据类型的半格属性（关联性、交换性、等幂性）。
+* 合流分析（如Bloom语言）使用有关计算单调性的信息最大限度地利用无序性。
+* PBS（概率有界过时）使用从现实系统收集的模拟和信息来描述部分quorum系统的预期行为。
+
+我将进一步讨论所有这些问题。
+
+## Primary/backup replication
+
+主/备份复制（也称为主拷贝复制，主从复制或日志传送）可能是最常用的复制方法，也是最基本的算法。所有更新都在主服务器上执行，并且操作日志（或者更改）会通过网络发送到备份副本。有两种变体：
+
+- asynchronous primary/backup replication 和
+- synchronous primary/backup replication
+
+同步版本需要两条消息（“更新”+“确认接收”），而异步版本只运行一条消息（“更新”）。
+
+P/B（主从复制）很常见。例如，默认情况下，MySQL复制使用异步变量。MongoDB也使用P/B（带有一些用于故障转移的附加过程）。所有操作都在一个主服务器上执行，该主服务器将它们序列化为本地日志，然后将其异步复制到备份服务器。
+
+正如我们前面在异步复制中讨论的，任何异步复制算法只能提供弱的持久性保证。在MySQL复制中，这表现为复制延迟：异步备份总是至少落后于主备份一个操作。如果主服务器发生故障，则尚未发送到备份的更新将丢失。
+
+P/B复制的同步变体确保写操作在返回到客户机之前存储在其他节点上，而等待其他副本的响应则要付出代价。然而，值得注意的是，即使是这种变体也只能提供微弱的保证。考虑以下简单的故障场景：
+
+* 主服务器接收写入并将其发送到备份；
+* 备份持续存在并确认写入
+* 然后在向客户端发送确认之前主服务器失败
+
+客户机现在假定提交失败，但备份提交了；如果将备份升级到主服务器，则它将不正确。可能需要手动清理来协调失败的主备份或分散备份。
+
+当然，我在这里简化了很多内容。虽然所有P/B复制算法都遵循相同的常规消息模式，但它们在故障转移处理、长时间脱机副本等方面有所不同。然而，在这个方案中，不可能对主系统的不适当故障有弹性。
+
+在基于P/B的方案中，关键在于它们只能提供尽最大努力的保证（例如，如果节点在不适当的时间发生故障，它们很容易丢失更新或错误更新）。此外，P/B方案容易受到脑裂的影响，在这种情况下，由于临时网络问题而启动到备份的故障转移，并导致主备份和备份同时处于活动状态。
+
+> **脑裂（split-brain）**:
+>
+> 指在一个高可用（HA）系统中，当联系着的两个节点断开联系时，本来为一个整体的系统，分裂为两个独立节点，这时两个节点开始争抢共享资源，结果会导致系统混乱，数据损坏。
+>
+> 对于无状态服务的HA，无所谓脑裂不脑裂；但对有状态服务(比如MySQL)的HA，必须要严格防止脑裂。（但有些生产环境下的系统按照无状态服务HA的那一套去配置有状态服务，结果可想而知...）
+
+为了防止不适当的失败导致违反一致性保证，我们需要添加另一轮消息传递，这将使我们获得两阶段提交协议（2PC）。
+
+## Two phase commit (2PC)
+
+两阶段提交（2PC）是许多经典关系数据库中使用的协议。例如，mysql cluster（不要与普通mysql混淆）使用2pc提供同步复制，下图说明了消息流：
+
+```
+[ Coordinator ] -> OK to commit?     [ Peers ]
+                <- Yes / No
+
+[ Coordinator ] -> Commit / Rollback [ Peers ]
+                <- ACK
+```
+
+在第一阶段（voting），Coordinator将更新发送给所有参与者。每个参与者处理更新并投票决定是提交还是中止。投票提交时，参与者将更新存储到临时区域（提前写入日志）。在第二阶段完成之前，更新被认为是临时的。
+
+在第二阶段（决策），Coordinator决定结果，并通知每个参与者。如果所有参与者都投票同意提交，那么更新将从临时区域获取并永久更新。
+
+在提交被认为是永久的之前,二阶段是有用的，因为它允许系统在节点失败时回滚更新。相反，在主/备份（“1PC”）中，没有步骤回滚在某些节点上失败而在其他节点上成功的操作，因此副本可能会出现分歧。
+
+2PC很容易阻塞，因为单个节点故障（参与者或Coordinator）会阻塞进度，直到节点恢复。由于第二个阶段，恢复通常是可能的，在这个阶段中，其他节点会被告知系统状态。注意2PC假定每个节点的稳定存储中的数据永远不会丢失，并且不会永远崩溃。如果稳定存储中的数据在崩溃中损坏，数据仍然可能丢失。
+
+节点故障期间恢复过程的详细信息非常复杂，因此我不想详细介绍。主要任务是确保对磁盘的写入是持久的（例如，刷新到磁盘而不是缓存），并确保做出正确的恢复决策（例如，学习每轮的结果，然后在本地重做或撤消更新）。
+
+正如我们在关于CAP的章节中了解到的，2PC是一个CA——它不允许分区。2PC呈现的故障模型不包括网络分区；从节点故障恢复的指定方法是等待网络分区恢复。如果一个新的Coordinator失败了，就没有安全的方法来提升他；相反，需要人工干预。2PC还相当容易延迟，因为它是一种N/N的写方法，在最慢的节点确认之前，写操作无法继续。
+
+2PC在性能和容错之间取得了相当好的平衡，这就是它在关系数据库中流行的原因。但是，较新的系统通常使用允许分区的一致性算法，因为这样的算法可以提供临时网络分区的自动恢复以及对增加的节点间延迟的更优雅的处理。
+
+接下来让我们看一下分区容忍一致性算法。
+
+## Partition tolerant consensus algorithms
+
+分区容忍共识算法是我将要介绍的容错算法，它保持单拷贝一致性。还有一类容错算法：允许任意（拜占庭式）错误的算法；这些算法包括恶意操作导致失败的节点。这种算法很少在商业系统中使用，因为它们运行起来更昂贵，实现起来也更复杂——因此我将把它们排除在外。
+
+当涉及到分区容忍共识算法时，最著名的算法是paxos算法。然而，众所周知，它很难实现和解释，所以我将重点关注raft，这是一种最近（~2013年初）的算法，旨在更易于教学和实现。让我们首先看一下网络分区和允许分区的共识算法的一般特性。
+
+### What is a network partition?
+
+网络分区是指到一个或多个节点的网络链接失败。节点本身继续保持活动状态，甚至可以从网络分区的客户端接收请求。正如我们之前所了解的，在讨论cap定理的过程中，网络分区发生后，并不是所有系统都能很好地处理它们。
+
+网络分区很棘手，因为在网络分区期间，无法区分出现故障的节点和无法访问的节点。如果一个网络分区出现但没有节点失败，那么系统将被划分为两个同时处于活动状态的分区。下面的两个图说明了网络分区看起来如何类似于节点故障。
+
+一个2节点的系统，具有故障与网络分区：
+
+![replication](http://book.mixu.net/distsys/images/system-of-2.png)
+
+一个3个节点的系统，具有故障与网络分区：
+
+![replication](http://book.mixu.net/distsys/images/system-of-3.png)
+
+一个强制实现单一拷贝一致性的系统必须有某种方法来打破对称性：否则，它将分裂成两个独立的系统，这两个系统可以彼此分离，并且不能再保持单一拷贝的假象。
+
+对于强制执行单一副本一致性的系统，网络分区容错要求在网络分区期间，只有一个系统分区保持活动状态，因为在网络分区期间，不可能防止分裂（例如cap定理）。
+
+### Majority decisions
+
+这就是为什么分区容忍共识算法采用多数票的原因。只要求大多数节点（而不是所有节点，如2PC中的节点）同意更新，允许少数节点由于网络分区而停机、变慢或无法访问。只要 `(N/2 + 1)-of-N`  节点可以访问，系统就可以继续运行。
+
+分区容忍共识算法使用奇数个节点（例如3、5或7）。只有两个节点，故障后就不可能有明显的多数。例如，如果节点数为3个，则系统对一个节点故障具有恢复能力；对于5个节点，系统对两个节点故障具有恢复能力。
+
+当发生网络分区时，这些分区的行为是不对称的。一个分区将包含大多数节点。少数分区将停止处理操作，以防止网络分区期间出现分歧，但多数分区可以保持活动状态。这样可以确保只有一个系统状态副本保持活动状态。
+
+大多数也很有用，因为它们可以容忍分歧：如果存在扰动或故障，节点的投票方式可能不同。然而，由于只可能有一个大多数决定，暂时的分歧最多只能阻止协议继续进行（放弃活跃性），但不会违反单一副本一致性标准（安全属性）。
+
+### Roles
+
+有两种方法可以构建一个系统：所有节点可能具有相同的职责，或者节点可能具有单独的、不同的角色。
+
+复制的一致性算法通常选择对每个节点具有不同的角色。拥有一个固定的引导服务器或主服务器是一种优化，它使系统更高效，因为我们知道所有更新都必须通过该服务器。非主节点只需要将其请求转发给主节点。
+
+注意，具有不同的角色并不妨碍系统从主节点（或任何其他角色）的失败中恢复。因为角色在正常操作期间是不变的，并不意味着在失败后重新分配角色（例如，通过leader选择阶段）就不能从失败中恢复。节点可以重用leader选择的结果，直到节点故障和/或网络分区发生为止。
+
+paxos和raft都使用不同的节点角色。特别是，他们有一个领导节点（paxos中的提案者），负责在正常运行期间进行协调。在正常运行期间，其余节点是追随者（paxos中的“接受者”或“投票者”）。
+
+### Epochs
+
+在Paxos和Raft中，正常运行的每个阶段都被称为一个时代（epochs，Raft中称为term）。在每个时代，只有一个节点是指定的主节点（类似的系统在日本使用，在日本，时代名称随着帝国继承而改变）。
+
+![replication](http://book.mixu.net/distsys/images/epoch.png)
+
+选举成功后，领导者在任期间会协调，直到这个时代结束。如上图所示（来自筏纸），一些选举可能会失败，导致时代立即结束。
+
+epoch充当一个逻辑时钟，允许其他节点识别过时节点何时开始通信——已分区或不工作的节点将具有比当前节点更小的epoch编号，并且它们的命令将被忽略。
+
+### Leader changes via duels
+
+在正常操作过程中，一个允许分区的共识算法相当简单。正如我们前面所看到的，如果我们不关心容错，我们可以只使用2PC。大部分的复杂性实际上来自于确保一旦做出一致决定，它就不会丢失，并且协议可以处理由于网络或节点故障而导致的主节点更改。
+
+所有节点都以跟随者的身份开始；一个节点在开始时被选为领导者。在正常操作期间，领导者保持心跳，允许追随者检测领导者是否失败或被分割。
+
+当一个节点检测到一个领导者变得不响应（或者，在最初的情况下，没有领导者存在），它会切换到一个中间状态（在raft中称为“候选人”），在这个状态中，它将时代值增加一个，启动一个领导者选举，并竞争成为新的领导者。
+
+为了被选为领导者，一个节点必须获得大多数选票。分配选票的一种方法是简单地按先到先得的原则分配选票；这样，最终将选出一位领导人。在所有尝试当选之间的节点中添加随机的等待时间可以减少同时尝试当选的节点数。
+
+### Numbered proposals within an epoch
+
+在每一个时代，领袖提出一次一个value，以供表决。在每个时代，每个提案都用一个唯一的严格递增的数字编号。追随者（投票者/接受者）接受他们收到的针对特定提案编号的第一个提案。
+
+### Normal operation
+
+在正常运行期间，所有提案都将通过主节点。当客户机提交一个提案（例如更新操作）时，领导会联系quorum中的所有节点。如果不存在竞争性提案（基于追随者的回应），领导者会提出value。如果大多数追随者接受这个价值，那么这个价值就被认为是被接受的。
+
+由于另一个节点也可能试图充当领导者，因此我们需要确保一旦接受了一个建议，它的value就永远不会改变。否则，一个已经被接受的提议可能会被竞争对手的领导回复。Lamport 这样表示：
+
+> P2：如果选择了value为v的提案，则所选的每个编号较高的提案都具有v。
+
+确保这一属性的持有，要求追随者和提议者都受到算法的约束，不能改变已被大多数人接受的value。请注意，“value永远不能更改”是指协议的单个执行（或运行/实例/决策）的value。一个典型的复制算法将运行该算法的多个执行，但大多数关于该算法的讨论集中在一次运行上，以保持简单。我们希望防止更改或覆盖决策历史记录。
+
+为了强制执行此属性，提案人必须首先向追随者询问他们（编号最高）接受的提案和价值。如果提案人发现提案已经存在，那么它必须简单地完成本提案的执行，而不是自己提出提案。Lamport 这样表示：
+
+> P2B。如果选择了具有值v的提议，则由任何提议者发布的每个更高编号的相同提议具有值v。
+
+进一步来说：
+
+> P2C。 对于任何v和n，如果[由领导者]发布具有值v和数字n的提议，则存在由大多数接受者[跟随者]组成的集合S，使得:
+>
+> （a）S中的接受者都没有接受 任何编号小于n的提案，或
+>
+> （b）v是S中编号所有小于N的所有提案里编号最高的那个提案的值。
+
+这是paxos算法的核心，也是从中派生出来的算法。在协议的第二阶段之前，不会选择要提案的值。提案人有时必须简单地重新传输先前做出的决定，以确保安全（例如P2C中的条款b），直到他们知道自己可以自由地强加自己的提案价值（例如条款a）。
+
+如果存在多个以前的提案，则使用编号最高的提案。只有在完全没有竞争性提案的情况下，提案人才能试图强加自己的值。
+
+为了确保在提案人向每个接受人询问其最新值时不会出现竞争性提案，提案人要求跟随者不要接受提案编号低于当前提案编号的提案。
+
+将各个部分放在一起，使用Paxos做出决定需要两轮沟通：
+
+```
+[ Proposer ] -> Prepare(n)                                [ Followers ]
+             <- Promise(n; previous proposal number
+                and previous value if accepted a
+                proposal in the past)
+
+[ Proposer ] -> AcceptRequest(n, own value or the value   [ Followers ]
+                associated with the highest proposal number
+                reported by the followers)
+                <- Accepted(n, value)
+```
+
+准备阶段允许提案人了解任何竞争或以前的提案。第二阶段是提出新值或先前接受的值。在某些情况下，例如，如果两个提议者同时处于活动状态（决斗）；如果消息丢失；或者如果大多数节点都失败，则多数人不会接受任何提议。但这是可以接受的，因为提案的值的决策规则收敛到一个值（上一次尝试中建议数最高的值）。
+
+事实上，根据FLP不可能的结果，这是我们所能做的最好的：解决共识问题的算法必须在消息传递边界的保证不成立时放弃安全性或活跃性。Paxos放弃了活跃性：它可能不得不无限期地推迟决策，直到某个时间点没有竞争的领导者，并且大多数节点都接受了一个提议。这比违反安全保证更可取。
+
+当然，实现这个算法要比听起来困难得多。有许多小问题，即使是在专家的手中，加起来也相当可观的代码量。这些问题包括：
+
+* 实际优化：
+  * 通过领导租约（而不是心跳）避免重复领导人选举；
+  * 避免在领导者份不变的稳定状态下重复建议消息；
+* 确保追随者和提议者不会丢失稳定存储中的项目，并且存储在稳定存储中的结果不会被微妙地损坏（例如磁盘损坏）；
+* 允许集群成员以安全的方式进行更改（例如，基本paxos依赖于这样一个事实：大多数成员总是在一个节点中相交，如果成员可以任意更改，那么这个节点就不起作用）；
+* 需要有一个程序，在崩溃、磁盘丢失或配置新节点后，以安全和高效的方式更新新副本；
+* 在一段合理的时间后，为确保安全所需的数据（例如，平衡存储要求和容错要求），需要有一个快照和垃圾数据收集程序。
+
+Google的[Paxos Made Live](http://labs.google.com/papers/paxos_made_live.html)文章详细介绍了其中的一些挑战。
+
+## Partition-tolerant consensus algorithms: Paxos, Raft, ZAB
+
+希望你已经了解了一个允许分区的共识算法是如何工作的。我鼓励你阅读下阅读部分中的一篇文章，以了解不同算法的具体情况。
+
+Paxos。 Paxos是编写强一致的分区容错复制系统时最重要的算法之一。 It is used in many of Google's systems, including the [Chubby lock manager](http://research.google.com/archive/chubby.html) used by [BigTable](http://research.google.com/archive/bigtable.html)/[Megastore](http://research.google.com/pubs/pub36971.html), the Google File System as well as [Spanner](http://research.google.com/archive/spanner.html).
+
+Paxos通常被认为是很难实现的，并且有来自具有相当多分布式系统专业知识的公司的一系列论文解释了进一步的实际细节（请参阅进一步阅读）。You might want to read Lamport's commentary on this issue [here](http://research.microsoft.com/en-us/um/people/lamport/pubs/pubs.html#lamport-paxos) and [here](http://research.microsoft.com/en-us/um/people/lamport/pubs/pubs.html#paxos-simple).
+
+这些问题主要涉及Paxos是根据一轮共识决策进行描述的事实，但实际工作实施通常希望有效地进行多轮共识。这导致了[核心协议上的许多扩展](http://en.wikipedia.org/wiki/Paxos_algorithm)的开发，任何对构建基于paxos的系统感兴趣的人仍然需要消化这些扩展。此外，还有一些额外的实际挑战，例如如何促进集群成员资格的改变。
+
+ZAB。ZAB——在Apache ZooKeeper中使用了ZooKeeper原子广播协议。ZooKeeper是为分布式系统提供协调原语的系统，许多以Hadoop为中心的分布式系统（如HBase、Storm、Kafka）都使用它进行协调。ZooKeeper基本上是开源社区的Chubby版本。从技术上讲，原子广播是一个不同于纯共识的问题，但它仍然属于保证强一致性的分区容忍算法范畴。
+
+Raft。RAFT是最近（2013年）对该算法系列的一个补充。它被设计成比Paxos更容易教学，同时提供相同的保证。特别是算法的不同部分之间的分离更加清晰，论文还描述了一种集群成员关系变化的机制。它最近在受ZooKeeper启发的[etcd](https://github.com/coreos/etcd)中被采用。
+
+## Replication methods with strong consistency
+
+在本章中，我们研究了强制强一致性的复制方法。从同步工作和异步工作之间的对比开始，我们逐步发展到能够容忍日益复杂的故障的算法。以下是每种算法的一些关键特性：
+
+#### Primary/Backup
+
+* Single, static master
+* Replicated log, slaves are not involved in executing operations
+* No bounds on replication delay
+* Not partition tolerant
+* Manual/ad-hoc failover, not fault tolerant, "hot backup"
+
+#### 2PC
+
+- Unanimous（一致） vote: commit or abort
+- Static master
+- 2PC cannot survive simultaneous failure of the coordinator and a node during a commit
+- Not partition tolerant, tail latency sensitive
+
+#### Paxos
+
+- Majority vote
+- Dynamic master
+- Robust to n/2-1 simultaneous failures as part of protocol
+- Less sensitive to tail latency
+
+## Further reading
+
+#### Primary-backup and 2PC
+
+- [Replication techniques for availability](http://scholar.google.com/scholar?q=Replication+techniques+for+availability) - Robbert van Renesse & Rachid Guerraoui, 2010
+- [Concurrency Control and Recovery in Database Systems](http://research.microsoft.com/en-us/people/philbe/ccontrol.aspx)
+
+#### Paxos
+
+- [The Part-Time Parliament](http://research.microsoft.com/users/lamport/pubs/lamport-paxos.pdf) - Leslie Lamport
+- [Paxos Made Simple](http://research.microsoft.com/users/lamport/pubs/paxos-simple.pdf) - Leslie Lamport, 2001
+- [Paxos Made Live - An Engineering Perspective](http://research.google.com/archive/paxos_made_live.html) - Chandra et al
+- [Paxos Made Practical](http://scholar.google.com/scholar?q=Paxos+Made+Practical) - Mazieres, 2007
+- [Revisiting the Paxos Algorithm](http://groups.csail.mit.edu/tds/paxos.html) - Lynch et al
+- [How to build a highly available system with consensus](http://research.microsoft.com/lampson/58-Consensus/Acrobat.pdf) - Butler Lampson
+- [Reconfiguring a State Machine](http://research.microsoft.com/en-us/um/people/lamport/pubs/reconfiguration-tutorial.pdf) - Lamport et al - changing cluster membership
+- [Implementing Fault-Tolerant Services Using the State Machine Approach: a Tutorial](http://citeseer.ist.psu.edu/viewdoc/summary?doi=10.1.1.20.4762) - Fred Schneider
+
+#### Raft and ZAB
+
+- [In Search of an Understandable Consensus Algorithm](https://ramcloud.stanford.edu/wiki/download/attachments/11370504/raft.pdf), Diego Ongaro, John Ousterhout, 2013
+- [Raft Lecture - User Study](http://www.youtube.com/watch?v=YbZ3zDzDnrw)
+- [A simple totally ordered broadcast protocol](http://labs.yahoo.com/publication/a-simple-totally-ordered-broadcast-protocol/) - Junqueira, Reed, 2008
+- [ZooKeeper Atomic Broadcast](http://labs.yahoo.com/publication/zab-high-performance-broadcast-for-primary-backup-systems/) - Reed, 2011
