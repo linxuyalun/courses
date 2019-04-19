@@ -5,7 +5,7 @@
 * [Distributed systems for fun and profit](resource-management-infra/distributed-systems.md)
 * [The Google File System](resource-management-infra/gfs.md)
 * [MapReduce](resource-management-infra/mapreduce.md)
-* [No compromises: distributed transactions with consistency, availability, and performance](resource-management-infra/distributed-transactions-with-consistency-availability-and-performance.md)
+* [No compromises: distributed transactions with consistency, availability, and performance](resource-management-infra/farm.md)
 * The evolution of cluster scheduler architectures
 * Mesos, Omega, Borg: A Survey
 * Recent Developments in Resource Management in Cloud Computing and Large Computing Clusters. 
