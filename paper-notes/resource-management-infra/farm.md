@@ -12,7 +12,6 @@
 ## Reference
 
 - [vedio](https://www.youtube.com/watch?v=fYrDPK_t6J8)
-- [slides](https://pdfs.semanticscholar.org/adff/d5d50baa1c98b3562c995cef35c4e3256092.pdf)
 - [translation](farm-translation.md)
 - [Slides](farm.pptx)
 
@@ -46,4 +45,76 @@ FaRM中的每个机器都会把它大部分内存贡献给共享内存，因为�
 
 正如之前所说的，为了实现高性能，协议广泛使用了RDMA 单边操作来优化系统，协议同样尽可能的减少信息数来降低cpu的开销。比如论文使用primary-backup replication来减少消息数；使用乐观锁，它可以在一些情况下避免必须进行messageing的锁对象；第三点，协调器只读primaries，来减少锁，减少messaging
 
-ok，那么一个事务执行是怎么work的呢？
+ok，那么一个事务执行是怎么work的呢？在FaRM中，每个事务都是由单个线程区执行的
+
+* 应用线程开启一个事务，同时变为协调者（coordinator）；
+* C可以使用单边RDMA从集群中的其他机器读对象，C显然可以从多台机器读多个对象来执行一些操作；
+* Write 都是乐观的，这些write都会被buffer在coordinator的内存中，直到commit time； 
+* 在commit时，我们会去提交这些乐观的事务，如果提交成功，所有更新都会自动应用到共享内存中，否则事务就会被abort，然后就要重试。
+
+那么如何进行commit？一个非常直观的想法是使用2PC，它需要2轮去commit transaction。然而，它需要一些messages，然后在transaction commit期间，它同样需要cpu的开销。因此，这篇文章没有使用2pc，而是设计了下面这一种思路：
+
+* Lock：协调器将lock record写入到primary中。record包含所有已写入对象的版本和新值，以及具有已写入对象的所有区域的列表。primary将对象锁定在指定的版本来处理这些记录，并返回一条消息，报告是否成功获取了所有锁。如果任何对象版本在事务读取后发生更改，或者对象当前被另一个事务锁定，则锁定会失败。在这种情况下，协调器中止事务。它将一个中止记录写入所有主计算机，并向应用程序返回一个错误。
+* Validate：因为使用了乐观锁的机制，所以validate是必要的。协调器通过从primary中读取对象的版本来执行读验证。如果任何对象已更改，验证将失败，事务将中止。论文使用RDMA进行验证，因此这一步操作不需要额外的开销。
+* Replicate：验证成功的话，就会把这些数据写入到备份中，同样的，使用单边RDMA，因此只会有网卡返回一个ACK
+* Update and unlock：在所有提交备份写入都被确认之后，协调器将Commit primaries log写入每个primary里。Primaries处理这些log的方法是：在适当的位置更新对象，增加它们的版本，然后解锁它们，这样就公开了事务提交的写操作。
+
+锁定确保了写入对象的安全，验证确保了只读取对象的安全。在没有失败的情况下，这相当于在序列化点原子地执行和提交整个事务。
+
+这张图和前面那个对比，首先，messages数量减少了，在lock阶段，事务执行期间我们用到了cpu，而在剩余阶段cpu都用不到。剩余三个阶段延迟都很低，因为我们用的是单边RDMA。
+
+## Failure Recovery
+
+ok，这是没有failure的情况，那么如果发生了failure会怎么样。
+
+由于使用了单边操作，failure recovery会比较复杂。一个直觉是说，基本上我们没法拥有CPU rejecting messages，一个类似的系统，对于一致性，它可能会采取的措施就是利用租约，系统保证它存储的对象在其租约到期之前不会发生变化。但是FaRM使用RDMA，nic网卡不支持租约识别，因此不管怎么样nic一定会返回一个response。从这个角度而言，论文需要去重新设计一个故障恢复。对于这一点，论文实现了一个精确的成员关系，失败后，新配置中的所有机器必须在允许对象突变之前就其成员资格达成一致。
+
+再比如，单边RDMA写入也会影响事务恢复。跨配置一致性的一般方法是拒绝来自旧配置的消息。FaRM无法使用此方法，我们通过Drain logs来解决这个问题，以确保在恢复过程中处理所有相关的记录。
+
+论文需要保证高可用，对于数据高可用，这也就意味着当出现失效时，在继续处理数据前必须要重新配置系统。一个主要的技术是使用主备份，当primary失效的时候，backup会瞬间晋升成primary，
+
+为了迅速的错误恢复，发现错误的时间也要很快。论文使用了好几种技术来达成这一点，比如使用Dedicated network queues避免网络间的竞争，使用dedicated prioritized thread来避免CPU的竞争，使用memory pre-allocation避免内存分配的干扰。
+
+为了高可用，论文也尽可能的使用并行。
+
+ok，那接下来就是它到底怎么work，这是一个从一个high level的角度来说。
+
+### detecting failures
+
+在FaRM集群中有一个特殊的角色，是configuration manager，简称CM。CM的目标就是侦查其他机器的故障，要达成这一点，它会向其他机器发送心跳信息。其他机器也可以因此知道CM是否失效。
+
+现在假设一台机器挂了，CM就会知道，CM就要启动一个配置改变协议（显然，就是主备份），第一步是将新配置写入agreement service，FaRM用的就是ZooKeeper。
+
+### configuration change
+
+那么configuration change是怎么工作的，正如一开始提及的那样，先将新配置写入ZooKeeper。
+
+同时，CM会remap regions，因此cm会重新分配先前映射到故障机器的区域，对于失败的primary，它总是将backup晋升为primary并且重新分配。
+
+当CM从ZooKeeper收到一个response并且重新映射区域后，CM向配置中的所有计算机发送Config-New的消息，在收到以后，所有机器会更新自身的配置并停止访问所有受失败影响的region，之后这些机器向CM发送一个Config-Ack，当CM收到所有的Config-Ack后，它再向所有机器发送Config-Commit，在这之后，就可以进行下一步的Recovery。
+
+我们之所以需要一个三步message是使用了单边RDMA，因此这种方法给了我们精确的成员，配置中的机器不会向不在配置中的机器发出RDMA请求，并且会忽略对不在配置中的机器的RDMA读操作和RDMA写操作的应答。
+
+### Transaction recovery
+
+修改配置后呢，集群将要恢复那些需要恢复的事务。
+
+正如我之前提及的那样，在恢复region前，需要drain transaction logs，意味着需要处理所有事务logs中的所有记录。所以目标就是在新的配置上要接管那些在旧的配置上还未执行的messages。
+
+draining logs完成后，就会开始transaction recovery。它会在每一个受影响的region都执行，那每个region数据都很大，所以这些恢复操作都被设计为并行的。第一步，所有backup都要根据log去找那些它们需要恢复的事务，它们会把对应region的log发送给primary，在primary拿到所有message后，primary会重新去获取这些region的对应log。要注意的是primary在内存中有一个数据的备份，因为primary是从backup晋升过来的。所以这些region看起来应该和失效前是一致的。
+
+在确定了要恢复的事务后，之前受失败影响的region就可以被重新访问了。后续恢复步骤并行地读取对象并提交对region的更新，从而提升效率。
+
+下一步是复制primary上的log，这是需要的，需要应对未来的失效。然后primary给协调器发送一个投票请求，根据事务更新的每个区域的投票决定是提交还是中止事务，最后coordinator决定最终结果。
+
+所以这就是事务的恢复，我知道它涉及很多步骤，而且还隐藏了一些细节，比如如何确定每个region的投票。我们需要记住的是，上面这些步骤的直觉是恢复保留了先前已提交或中止的事务的结果。我们说只有primary公开事务修改或coordinator通知应用程序提交事务时，事务被提交了。 当coordinator发送中止消息或通知应用程序事务已中止时，事务将中止。 对于尚未确定结果的交易，恢复可能会提交或中止，但它确保从其他故障中恢复可以保留之前结果。另外一点是，FaRM通过backup晋升为primary机制，确定恢复事务后相关region可以被重新访问以及大量的并行操作去尽可能的减少系统的停机时间。
+
+### Data recovery
+
+最后一步是数据恢复，对于FaRM来说，就是要对那些丢失了一个backup的region重新创建一个新的backup，这些是并行完成的，当在进行数据恢复的时候，新的事务仍然可以执行。因为它不会干扰到新的事务，因此在恢复数据的时候可以慢一点，放在后台，尽量不去影响前台的操作。
+
+## Evaluation
+
+最后，我花一两分钟讲一下FaRM的评估结果。
+
+首先是性能，在正常操作下，没有failures。TATP是用来测试高性能内存数据库的，它主要都是读操作。
