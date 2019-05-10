@@ -1,6 +1,6 @@
 # Contents
 
-## Resource Management Infra
+## Schedule & Distributed System
 
 * [Distributed systems for fun and profit](resource-management-infra/distributed-systems.md)
 * [The Google File System](resource-management-infra/gfs.md)
@@ -28,4 +28,10 @@
 - [Understanding Ephemeral Storage for Serverless Analytics](serverless-computing/understanding-ephemeral-storage-for-serverless-analytics.md)
 - [Pocket Elastic Ephemeral Storage for Serverless Analytics](serverless-computing/pocket-elastic-ephemeral-storage-for-serverless-analytics.md)
 - [SOCK Rapid Task Provisioning with Serverless-Optimized Containers](serverless-computing/SOCK-rapid-task-provisioning-with-serverless-optimized-containers.md)
+
+## Microservice
+
+* [Processes, Motivations, and Issues for Migrating to Microservices Architectures: An Empirical Investigation](https://www.researchgate.net/profile/Davide_Taibi/publication/319187656_Processes_Motivations_and_Issues_for_Migrating_to_Microservices_Architectures_An_Empirical_Investigation/links/5a267e064585155dd421a652/Processes-Motivations-and-Issues-for-Migrating-to-Microservices-Architectures-An-Empirical-Investigation.pdf)
+* [Microservices Architecture Enables DevOps: Migration to a Cloud-Native Architecture](https://ieeexplore.ieee.org/abstract/document/7436659)
+* [Open Issues in Scheduling Microservices in the Cloud](https://lydiaychen.com/pdf/IEEECloud_microServices.pdf)
 
