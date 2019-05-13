@@ -39,6 +39,6 @@
 
 ## Isolation
 
-* [Unikernels vs Containers: An In-Depth Benchmarking Study in the Context of Microservice Applications](https://www.researchgate.net/publication/329563819_Unikernels_vs_Containers_An_In-Depth_Benchmarking_Study_in_the_Context_of_Microservice_Applications)
-* [My VM is Lighter (and Safer) than your Container](./isolation/lightvm.md)
+* [Unikernels vs Containers: An In-Depth Benchmarking Study in the Context of Microservice Applications](isolation/unikernel.md)
+* [My VM is Lighter (and Safer) than your Container](isolation/lightvm.md)
 
