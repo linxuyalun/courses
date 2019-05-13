@@ -31,6 +31,8 @@
 
 ## Microservice
 
+*The following papers notes can be seen [here](microservices/microservices.md), and its [sildes](microservices/cloud-native.pdf).*
+
 * [Processes, Motivations, and Issues for Migrating to Microservices Architectures: An Empirical Investigation](https://www.researchgate.net/profile/Davide_Taibi/publication/319187656_Processes_Motivations_and_Issues_for_Migrating_to_Microservices_Architectures_An_Empirical_Investigation/links/5a267e064585155dd421a652/Processes-Motivations-and-Issues-for-Migrating-to-Microservices-Architectures-An-Empirical-Investigation.pdf)
 * [Microservices Architecture Enables DevOps: Migration to a Cloud-Native Architecture](https://ieeexplore.ieee.org/abstract/document/7436659)
 * [Open Issues in Scheduling Microservices in the Cloud](https://lydiaychen.com/pdf/IEEECloud_microServices.pdf)
@@ -38,5 +40,5 @@
 ## Isolation
 
 * [Unikernels vs Containers: An In-Depth Benchmarking Study in the Context of Microservice Applications](https://www.researchgate.net/publication/329563819_Unikernels_vs_Containers_An_In-Depth_Benchmarking_Study_in_the_Context_of_Microservice_Applications)
-* [My VM is Lighter (and Safer) than your Container](http://cnp.neclab.eu/projects/lightvm/lightvm.pdf)
+* [My VM is Lighter (and Safer) than your Container](./isolation/lightvm.md)
 
