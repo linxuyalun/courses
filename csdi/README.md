@@ -1,0 +1,23 @@
+# CSDI
+
+* [Introduction](slides/lec1-intro&8-important-problems.pdf)
+* [Non-volatile memory](slides/lec2-NVM.pdf)
+  * **Reading**:  [System software for persistent memory](http://delivery.acm.org/10.1145/2600000/2592814/a15-dulloor.pdf?ip=202.120.40.86&id=2592814&acc=ACTIVE%20SERVICE&key=BF85BBA5741FDC6E%2E17676C47DFB149BF%2E4D4702B0C3E38B35%2E4D4702B0C3E38B35&__acm__=1559269462_5c2491574f8858e1e91f7557f2c91751)
+  * [Notes](notes/nvm.md)
+
+* [Crash-Recovery](slides/lec3-RAMCloud.pdf)
+  * **Reading**: [Fast Crash Recovery in RAMCloud](http://www.scs.stanford.edu/~rumble/papers/ramcloud_sosp2011.pdf)
+  * [Notes](notes/ramcloud.md)
+* [Multiprocessor: Concurrency & Locking](slides/lec4-multiprocessor-scalability.pdf)
+  * **Reading**: [Non-scalable locks are dangerous](https://people.csail.mit.edu/nickolai/papers/boyd-wickizer-locks.pdf)
+  * [Notes](notes/scalable-locking.md)
+* [Transactional Memory/DB](slides/lec5-transactional-memory.pdf)
+  * **Reading**: [Transactional Memory: Architectural Support for Lock-Free Data Structures](http://cs.brown.edu/~mph/HerlihyM93/herlihy93transactional.pdf)
+  * [Notes](notes/transaction-memory.md)
+* [NoSQL & BigTable](slides/lec6-NoSQL-Distributed-Systems.pdf)
+  * **Reading**: [Bigtable: A Distributed Storage System for Structured Data](https://static.googleusercontent.com/media/research.google.com/zh-CN//archive/bigtable-osdi06.pdf)
+  * [Notes](notes/nosql.md)
+* [Distributed Transactions](slides/lec8-dtx.pdf)
+  * **Reading**: [Spanner: Google’s Globally-Distributed Database](https://www.usenix.org/system/files/conference/osdi12/osdi12-final-16.pdf)
+  * [Notes](notes/dtx.md)
+
