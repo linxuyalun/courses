@@ -4,7 +4,6 @@
 * [Non-volatile memory](slides/lec2-NVM.pdf)
   * **Reading**:  [System software for persistent memory](http://delivery.acm.org/10.1145/2600000/2592814/a15-dulloor.pdf?ip=202.120.40.86&id=2592814&acc=ACTIVE%20SERVICE&key=BF85BBA5741FDC6E%2E17676C47DFB149BF%2E4D4702B0C3E38B35%2E4D4702B0C3E38B35&__acm__=1559269462_5c2491574f8858e1e91f7557f2c91751)
   * [Notes](notes/nvm.md)
-
 * [Crash-Recovery](slides/lec3-RAMCloud.pdf)
   * **Reading**: [Fast Crash Recovery in RAMCloud](http://www.scs.stanford.edu/~rumble/papers/ramcloud_sosp2011.pdf)
   * [Notes](notes/ramcloud.md)
@@ -20,4 +19,21 @@
 * [Distributed Transactions](slides/lec8-dtx.pdf)
   * **Reading**: [Spanner: Google’s Globally-Distributed Database](https://www.usenix.org/system/files/conference/osdi12/osdi12-final-16.pdf)
   * [Notes](notes/dtx.md)
-
+* [RDMA-enable Transaction Processing](slides/lec9-drtm-tx.pdf)
+  * **Reading**: [Fast in-Memory Transaction Processing Using RDMA and HTM](https://ipads.se.sjtu.edu.cn/_media/publications/drtm-sosp15.pdf)
+  * [Notes](notes/rdma.md)
+* [RDMA-friendly Key/value Store](slides/lec10-rdma-kvs.pdf)
+  * **Reading**: [Fast in-Memory Transaction Processing Using RDMA and HTM](https://ipads.se.sjtu.edu.cn/_media/publications/drtm-sosp15.pdf)
+  * [Notes](notes/rdma.md#memory-storage)
+* Low (Tail) Latency
+  * **Reading**:
+  * Notes
+* NFV (Network Function Virtulization)
+  * **Reading**: 
+  * Notes:
+* Grapg Query on RDF
+  * **Reading**:
+  * Notes
+* Bugs
+  * **Reading**:
+  * Notes
