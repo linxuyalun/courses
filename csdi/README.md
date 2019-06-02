@@ -30,7 +30,7 @@
   * [Notes](notes/tail-latency.md)
 * NFV (Network Function Virtulization)
   * **Reading**: [The Click Modular Router](https://pdos.csail.mit.edu/papers/click:tocs00/paper.pdf)
-  * Notes
+  * [Notes](notes/nfv.md)
 * Grapg Query on RDF
   * **Reading**:
   * Notes
