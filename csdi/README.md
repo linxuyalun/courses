@@ -25,12 +25,12 @@
 * [RDMA-friendly Key/value Store](slides/lec10-rdma-kvs.pdf)
   * **Reading**: [Fast in-Memory Transaction Processing Using RDMA and HTM](https://ipads.se.sjtu.edu.cn/_media/publications/drtm-sosp15.pdf)
   * [Notes](notes/rdma.md#memory-storage)
-* Low (Tail) Latency
-  * **Reading**:
-  * Notes
+* [Low (Tail) Latency](slides/lec11-tail-latency.pdf)
+  * **Reading**: [The Tail at Scale](https://cseweb.ucsd.edu/~gmporter/classes/fa17/cse124/post/schedule/p74-dean.pdf)
+  * [Notes](notes/tail-latency.md)
 * NFV (Network Function Virtulization)
-  * **Reading**: 
-  * Notes:
+  * **Reading**: [The Click Modular Router](https://pdos.csail.mit.edu/papers/click:tocs00/paper.pdf)
+  * Notes
 * Grapg Query on RDF
   * **Reading**:
   * Notes
