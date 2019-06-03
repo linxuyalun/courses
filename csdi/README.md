@@ -31,9 +31,9 @@
 * NFV (Network Function Virtulization)
   * **Reading**: [The Click Modular Router](https://pdos.csail.mit.edu/papers/click:tocs00/paper.pdf)
   * [Notes](notes/nfv.md)
-* Grapg Query on RDF
-  * **Reading**:
-  * Notes
+* [Graph Query on RDF](slides/lec13-gquery.pdf)
+  * **Reading**: [Fast and Concurrent RDF Queries with RDMA-based Distributed Graph Exploration Presentation](https://www.usenix.org/system/files/conference/osdi16/osdi16-shi.pdf)
+  * [Notes](notes/graph-query.md)
 * Bugs
   * **Reading**:
   * Notes
