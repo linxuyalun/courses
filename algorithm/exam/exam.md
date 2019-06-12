@@ -156,18 +156,12 @@ L[i][j]=\left\{
 i && if\;i=j \\
 2&& if\;j=i+1\;and\;x[i]=x[j] \\
 max(L[i+1][j],L[i][j-1]) && if\;x[i]=x[j] \\
-max(L[i+1][j],L[i][j-1], 2+L[i+1][j+1]) && o.w.
+2+L[i+1][j-1] && o.w.
 \end{array}\right.
 $$
 对应的伪代码为：
 
-```
-for i = 1 to n
-	update f(i,i) and f(i,i+1)
-for i = (n - 2) to 1
-	for j = (i + 2) to n
-		update f(i,j)
-```
+![](img/3.png)
 
 从该伪代码易知，算法复杂度为 $O(n^2)$
 
@@ -215,7 +209,13 @@ The **Weighted Vertex Cover** problem is defined as follows: Given an undirected
 
 ### Solution
 
-题目再描述，问题就是对于一个无向图$G=(V,E)$，有$|V|=n$ 和 $|E|=m$ ，对于每个节点 $x_i\in V$，它都有一个各自的权重值 $c(i)$。问题问的就是是否能找到一个子集 $C \subseteq V$ ，使得对于原图中的每条边 $e \in E$ 都有至少一个点属于集合 $C$，并且权重值 $\sum_{i\in C}c_i$ 为最小。
+题目再描述，问题就是对于一个无向图$G=(V,E)$，有$|V|=n$ 和 $|E|=m$ ，对于每个节点 $\in V$，它都有一个各自的权重值 $c(i)$。问题问的就是找到一个子集 $C \subseteq V$ ，使得对于原图中的每条边 $e \in E$ 都有至少一个点属于集合 $C$，并且权重值 $\sum_{i\in C}c_i$ 为最小。
+
+由题意，易得对应的线性规划和其对偶问题：![](img/4.png)
+
+其中，$x_i$表示该点是否在集合 $C$ 中，$x_i+x_j\geq1$ 表示至少有一个点在边$(i,j)$ 上。$x_i$ 实际上范围为 $\{0,1\}$。因为这里是表达的是 relaxed primal LP，所以范围为 $x_i\geq0$；$_{(i,j)}y_e$ 表示边 $(i,j)$ 。
+
+> Todo
 
 # 2015
 
@@ -264,6 +264,8 @@ is a nonnegative cost $f_j$ for opening facility $j$, and a nonnegative connecti
 facility location problem as an integer programming problem.
 
 ### Solution
+
+> 这道题解法有问题🤨，晚点修改
 
 该问题的整数方程为：
 $$
@@ -361,6 +363,8 @@ Consider the following algorithm for **Cardinality Vertex Cover**: In each conne
 
 ### Solution
 
+
+
 ## 04
 
 ### Question
@@ -368,6 +372,10 @@ Consider the following algorithm for **Cardinality Vertex Cover**: In each conne
 Prove that the **Graph‐Isomorphism problem** is a NP problem.
 
 ### Solution
+
+题目是图同构问题，对于同一个图，我们可以用各种不同的形式来描述，这些形式都具有相同数目的边，具有相同数目的顶点，它们有着一一对应的关系，对应的顶点具有相同的连接性。这些图的不同形式，我们称之为图同构。
+
+要证明图同构问题是一个NP问题，只需要根据给出的映射函数 $\phi: V_1 \rightarrow V_2$，验证这个函数 $\phi$ 是否是映射的，并且对于 $(u,v) \in E$ 有且只有 $(\phi(u),\phi(v))\in E_2$
 
 ## 05
 
