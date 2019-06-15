@@ -423,7 +423,7 @@ Consider the following algorithm for **Cardinality Vertex Cover**: In each conne
 
 ### Solution
 
-
+= =……
 
 ## 04
 
@@ -586,11 +586,33 @@ $$
 
 ### Question
 
-Consider the following algorithm for **Cardinality Vertex Cover**: In each connect component of the input graph execute a **depth first search (DFS)**. Output the nodes that are not leaves in the DFS tree. Show that the output is indeed vertex cover, and that it approximates the minimum vertex cover within a factor of 2.
+Consider the following two algorithms for the **knapsack problem**: 
+
+1. The greedy algorithm (pick the item with the best value of $\frac{profit(i)}{size(i)}$);
+2. The algorithm that packs the maximum profit item
+
+Prove that the algorithm that picks the better  of these solutions is a $\frac{1}{2}$-approximation for the knapsack problem.
 
 ### Solution
 
-基本不考，要不就别看了，老师自己都晕晕的这道题= =
+背包问题的前提是每件物品只能使用一次，并且任何一件物品不会大到背包装不下。
 
-## 05
+先考虑贪心策略的情况，相当于把所有物品按性价比从大到小排列，依次选取，假设现在从大到小选取了 $n$ 件物品，那么有：
+$$
+profit(1)+profit(2)+...+profit(n)\leq OPT
+$$
+所谓的最优解OPT，一定具有性价比为所有解最高的特点，既然是按性价比从大到小排序，那么在容量不变的前提下，性价比为第（n+1）的商品，这个商品无法放进背包（因为容量不够），但是它总价值一定比OPT高：
+$$
+\frac{profit(1)+profit(2)+...+profit(n)+profit(n+1)}{Size}> \frac{OPT}{Size}
+$$
 
+$$
+\therefore\;profit(1)+profit(2)+...+profit(n)+profit(n+1)> OPT
+$$
+
+由此，我们可以确定，$profit(1)+profit(2)+...+profit(n)$ 和 $profit(n+1)$至少有一个 $≥\frac{1}{2}$，否则两者之和不可能 $>OPT$。
+
+若是前者总和大于后者，则前者必然大于 $\frac{1}{2}$，则第一种策略 $≥\frac{1}{2}OPT$；若是后者大于前者，则后者必大于$\frac{1}{2}OPT$，在这种情况下，背包问题会选择第二种算法把 $n+1$ 物品放入背包而不是第一种贪心策略，此时第二种策略 $≥\frac{1}{2}$，因此，不管怎么样，必有：
+$$
+Max\{totalProfit(policy\;1),totalProfit(policy\;2\} \geq \frac{1}{2}OPT
+$$
