@@ -616,3 +616,60 @@ $$
 $$
 Max\{totalProfit(policy\;1),totalProfit(policy\;2\} \geq \frac{1}{2}OPT
 $$
+
+## 05
+
+### Question
+
+Find the dual of the following linear program:
+$$
+Max \quad 6x_1+8x_2+5x_3+9x_4+5
+$$
+
+$$
+s.t.\quad2x_1+x_2+x_3+3x_4\geq5\\
+\quad\qquad x_1+3x_2+x_3+2x_4=3\\
+x_1,x_2\geq0\qquad\quad\;
+$$
+
+### Solution
+
+将原问题中的无限制变量进行转换，给不等式添加松弛变量，得到下式：
+$$
+Max \quad 6x_1+8x_2+5(y_1-y_2)+9(y_3-y_4)+0 \cdot s_1+5
+$$
+
+$$
+s.t.\quad2x_1+x_2+(y_1-y_2)+3(y_3-y_4)-s_1=5\\
+\quad x_1+3x_2+(y_1-y_2)+2(y_3-y_4)=3\\
+x_1,x_2,y_1,y_2,y_3,y_4,s_1\geq0 \qquad\qquad\;
+$$
+
+故对偶式为：
+$$
+Min \quad 5w_1+3w_2+5
+$$
+
+$$
+s.t.\quad 2w_1+w_2 \leq 6 \\
+\;\;\;\qquad w_1+3w_2\leq8\\
+\qquad\; w_1+w_2\leq5\\
+\qquad\quad\;\; -w_1-w_2\leq-5\\
+\qquad\quad\; 3w_1+2w_2\leq9\\
+\qquad\qquad\;\;-3w_1-2w_2\leq-9\\
+\;\;-w_1\leq0
+$$
+
+化简得：
+$$
+Min \quad 5w_1+3w_2+5
+$$
+
+$$
+s.t.\quad 2w_1+w_2 \leq 6 \\
+\;\;\;\qquad w_1+3w_2\leq8\\
+\qquad\; w_1+w_2=5\\
+\qquad\quad\; 3w_1+2w_2=9\\
+w_1\geq0
+$$
+
