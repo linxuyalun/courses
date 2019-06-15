@@ -541,14 +541,21 @@ In a **Feedback Vertex Set Problem** we are given a undirected graph $𝐺 = (�
 分析一下这个问题，实际上就是要找到这个图中的所有环，然后把这个环中最小权重的那个节点去掉。这样所有构成的节点集合就是我们所需要的最小权重集合。令 $W$ 为图中所有环的集合，$ c \in W $ 为图中的一个环。得到如下整数线性方程：
 $$
 Min\quad \sum w_vx_v\\
-\sum_{v_i\in c,c \in W}x_i \geq 1 \\
+\forall c_j\in W,\sum_{v_i: v_i \in c_j}x_i \geq 1 \\
 x_i \in \{0,1\}
 $$
 Relax LP:
 $$
 Min\quad \sum w_vx_v\\
-\sum_{v_i\in c,c \in W}x_i \geq 1 \\
+\forall c_j\in W,\sum_{v_i: v_i \in c_j}x_i \geq 1 \\
 x_i \geq 0
+$$
+
+DL:
+$$
+Max\quad \sum_{c\in W} y\\
+\forall v_i \in V, \sum_{c_j:v_i \in c_j}y_j \leq w_i\\
+y_j\geq0
 $$
 
 
