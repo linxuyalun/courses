@@ -188,11 +188,168 @@ $$
 
 ![](img/04.png)
 
-## Simplex
+## Duality theory
 
-* [十分钟带你学单纯形法](https://www.bilibili.com/video/av39143965?from=search&seid=280277717033128502)
+**对称形式的对偶**：
 
-## Dual Simplex
+原问题为：
+$$
+Min \quad cx 
+$$
 
-* [十分钟学会对偶单纯形法](https://www.bilibili.com/video/av39412585?from=search&seid=280277717033128502)
+$$
+s.t.\quad Ax \geq b \\
+\qquad x \geq 0
+$$
+
+其对偶问题为：
+$$
+Max \quad wb
+$$
+
+$$
+s.t.\quad wA \leq c^T \\
+\quad\; w\geq 0
+$$
+
+其中， $A=m\times n$ 矩阵，$b=(b_1,b_2,…,b_m)^T$ 是 $m$ 维列向量，$c=(c_1,c_2,…,c_n)$ 为 $n$ 维行向量，$x=(x_1,x_2,…,x_n)^T$ 是原问题的变量组成的 $n$ 维列向量，$w=(w_1,w_2,…,w_m)$ 是对偶问题变量组成的 $m$ 维行向量。
+
+*一个例子*：
+$$
+Min \quad x_1 - x_2
+$$
+
+$$
+s.t.\quad x_1+x_2\geq5\\
+\qquad\quad\; x_1-2x_2\geq1\\
+\qquad x_1,x_2\geq0
+$$
+
+则其对偶问题为：
+$$
+Max\quad 5w_1+w_2
+$$
+
+$$
+s.t.\quad w_1+w_2\leq1\\
+\qquad\qquad w_1-2w_2\leq-1\\
+\qquad w_1,w_2\geq0
+$$
+
+**非对称形式的对偶**：
+
+在上述对称形式的对偶中我们考虑的约束条件为不等式约束条件，这里我们对等式约束条件下的对偶问题称为非对称形式的对偶。但是对偶问题的变换方式和上述类似，只需稍微的变换一下，如下所示。设原问题为：
+$$
+Min \quad cx
+$$
+
+$$
+s.t.\quad Ax = b \\
+\qquad x \geq 0
+$$
+
+这里稍加变换就可以写成**对称形式的等价**为：
+$$
+Min \quad cx
+$$
+
+$$
+s.t.\quad Ax \geq b \\
+\qquad\qquad -Ax \geq -b \\
+\qquad x \geq 0
+$$
+
+按照对称形式的策略，此时的对偶问题为：
+$$
+Max \quad bz_1-bz_2
+$$
+
+$$
+s.t.\quad z_1A-z_2A\leq c^T \\
+\;z_1,z_2\geq0
+$$
+
+令 $w=z_1-z_2$ ，**显然w没有非负限制**，于是得到：
+$$
+Max\quad wb
+$$
+
+$$
+s.t. \quad wA \leq c^T
+$$
+
+*一个例子*：
+$$
+Min \quad 5x_1+4x_2+3x_3
+$$
+
+$$
+s.t.\quad x_1+x_2+x_3=4\\
+\qquad\quad\;\;3x_1+2x_2+x_3=5\\
+\quad x_1,x_2,x_3\geq0
+$$
+
+其对偶形式为：
+$$
+Max\quad4w_1+5w_2
+$$
+
+$$
+s.t.\quad w_1+3w_2\leq5\\
+\;\;\qquad w_1+2w_2\leq 4\\
+\qquad w_1+w_2\leq3
+$$
+
+关于对偶形式约束条件的不等号方向主要取决于原问题变量的约束条件，当原问题变量 $≥ 0$ 时，对应约束条件不等号为 $≤ $；当原问题变量 $≤ 0$ 时，对应约束条件不等号为 $≥$。
+
+**一般形式的对偶**：
+
+结合等式约束和不等式约束条件的问题就是第三种一般情形，设原问题为：
+$$
+Min\quad cx
+$$
+
+$$
+s.t.\quad A_1x\geq b_1\\
+\;\;\qquad A_2x=b_2\\
+\qquad \;\;A_3x\leq b_3\\
+\quad x\geq0
+$$
+
+对上述问题进行变换，引入松弛变量得：
+$$
+Min\quad cx + 0\cdot s_1 + 0\cdot s_2
+$$
+
+$$
+s.t.\quad A_1x-s_1= b_1\\
+\;\;A_2x=b_2\\
+\qquad \;\;A_3x+s_2= b_3\\
+\qquad x,s_1,s_2\geq0
+$$
+
+得到一个非对称形式，有非对称形式规则进行转化得到其对偶方程：
+$$
+Max\quad b_1w_1+b_2w_2+b_3w_3
+$$
+
+$$
+s.t.\quad A_1w_1+A_2w_2+A_3w_3 \leq c \\
+-w_1 \leq 0 \qquad\qquad\\
+w_3 \leq 0 \qquad\qquad\quad\\
+$$
+
+即：
+$$
+Max\quad b_1w_1+b_2w_2+b_3w_3
+$$
+
+$$
+s.t.\quad A_1w_1+A_2w_2+A_3w_3 \leq c \\
+w_1 \geq 0 \qquad\qquad\quad\\
+w_3 \leq 0 \qquad\qquad\quad\\
+w_2无限制 \qquad\qquad\;\;
+$$
+
+如果在原问题，有些变量无限制，比如变量 $y$ 在原问题中范围无限制，则只需要进行 $y=z_1-z_2\;and\;z_1,z_2\geq0$ 的转换即可。
 
