@@ -373,3 +373,18 @@ w_2无限制 \qquad\qquad\;\;
 $$
 
 如果在原问题，有些变量无限制，比如变量 $y$ 在原问题中范围无限制，则只需要进行 $y=z_1-z_2\;and\;z_1,z_2\geq0$ 的转换即可。
+
+## Classic FPTAS Problem
+
+* [0-1背包问题的动态规划算法](https://zhuanlan.zhihu.com/p/30959069)
+
+令背包容量为 $C$，物品个数为 $I$，$i$ 表示第 $i$ 个物品，$w_i$ 表示第 $i $ 个物品的重量。$m(i,W)$ 表示当限重为 $W$，前 $i$ 个物品下的最大 $Value$ 。这道题的DP方程如下：
+$$
+m(i,W)=\left\{
+\begin{array}{lcl}
+0 && if\;i=0 \\
+0&& if\;W=0 \\
+m(i-1,W)&&if\;w_i>W\\
+max(m(i-1,W),v_i+m(i-1,W-w_i)) && otherwise
+\end{array}\right.
+$$
