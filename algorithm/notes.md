@@ -385,6 +385,6 @@ m(i,W)=\left\{
 0 && if\;i=0 \\
 0&& if\;W=0 \\
 m(i-1,W)&&if\;w_i>W\\
-max(m(i-1,W),v_i+m(i-1,W-w_i)) && otherwise
+Max\{m(i-1,W),v_i+m(i-1,W-w_i)\} && otherwise
 \end{array}\right.
 $$

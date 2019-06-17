@@ -42,7 +42,7 @@ $$
 x,y \geq 0
 $$
 
-**如何确定这个$(x, y, z)=(\frac{1}{2},\frac{1}{2},0)$是最优解？？？**
+$(x, y, z)=(\frac{1}{2},\frac{1}{2},0)$是最优解
 
 ## 02
 
@@ -50,9 +50,9 @@ $$
 
 A **Minimum Makespan Scheduling** problem is as follows:
 
-**Input** processing times for 􏰊 jobs, 􏰋􏰌, 􏰋􏰍, . . . , 􏰋􏰎, and an integer 􏰏. 
+**Input** processing times for 􏰊 jobs $t_1,t_2,…,t_n$ and an integer 􏰏$m$.
 
-**Output** an assignment of the job to m􏰏 identical machines so that the completion time is minimized. 
+**Output** an assignment of the job to $m$􏰏 identical machines so that the completion time is minimized. 
 
 We know that by a greedy approach on the problem, the approximation factor 2. Give a tight example to show the approximation guarantee. 
 
@@ -107,7 +107,43 @@ Represent the problem as an integer program.
 
 ### Solution
 
-看不懂题目！
+Steiner Forest 问题定义如下：
+
+输入：输入一个无向图 $G=(V,E)$，每条边 $e\in E$ 有非负花费 $c_e \geq 0$，并且有 $k$ 对节点 $(s_i,t_i)\in V$。
+
+输出：一个最小花费的边集合 $F$，且集合中每个 $(s_i,t_i)$ 对都是连接的
+
+首先要注意的是，连接不代表相邻，即如果有 a— b—c，可以说 a c 是相连的。
+
+首先，做如下定义：
+$$
+r(u,v)=\left\{
+\begin{array}{lcl}
+1 && if\;\exist\; i\;\;s.t.\;(u,v)=(s_i,t_i) \\
+0 && otherwise
+\end{array}\right.
+$$
+意思为对于图上任意两个节点，若这两个节点属于 $k$ 对节点 $(s_i,v_i)$ 中的一个，则结果为1。
+
+然后，让$(S,\bar{S})$ 为 $G$ 的一个cut，定义：
+$$
+f(S)=\left\{
+\begin{array}{lcl}
+1 && if\;\exist\; u\in S,v\in \bar{S}\;\;s.t.\;r(u,v)=1 \\
+0 && otherwise
+\end{array}\right.
+$$
+于是，得到对应的LP方程：
+$$
+Min\quad c_ex_e
+$$
+
+$$
+s.t.\quad \sum_{e:e\in \delta(S)}x_e \geq f(S) \quad S\subseteq V\\
+x_e \geq 0 \quad e\in E
+$$
+
+其中，$\delta(S)$ 表示 $(S,\bar{S})$ 中所有被分割的边。
 
 ## 04
 
@@ -175,7 +211,7 @@ has many palindromic subsequences, including $A,C,G,C,A$ and $A,A,A,A$. Devise a
 $$
 L[i][j]=\left\{
 \begin{array}{lcl}
-i && if\;i=j \\
+1 && if\;i=j \\
 2&& if\;j=i+1\;and\;x[i]=x[j] \\
 max(L[i+1][j],L[i][j-1]) && if\;x[i]=x[j] \\
 2+L[i+1][j-1] && o.w.
@@ -237,7 +273,7 @@ The **Weighted Vertex Cover** problem is defined as follows: Given an undirected
 
 其中，$x_i$表示该点是否在集合 $C$ 中，$x_i+x_j\geq1$ 表示至少有一个点在边$(i,j)$ 上。$x_i$ 实际上范围为 $\{0,1\}$。因为这里是表达的是 relaxed primal LP，所以范围为 $x_i\geq0$；$_{(i,j)}y_e$ 表示边 $(i,j)$ 。
 
-> Todo
+> 后续 give up
 
 # 2015
 
@@ -286,23 +322,6 @@ is a nonnegative cost $f_j$ for opening facility $j$, and a nonnegative connecti
 facility location problem as an integer programming problem.
 
 ### Solution
-
-该问题的整数方程为：
-$$
-Min \quad \sum f_jx_j+\sum c_{i,j}x_jy_{i,j}
-$$
-
-$$
-s.t.\quad\sum x_jy_{i,j} \geq 1 \; for \; any \; i \\
-x_i\geq0\;for\;any\;i \\
-\quad y_{i,j}\geq0\;for\;any\;i,j
-$$
-
-其中，$x_i$表示设施 $i$ 是否开着；$y_{i,j}$ 表示城市 $i$ 到设施 $j$ 是否连通
-
-> 这道题原解法有问题🤨，上面这个形式并不是一个整数方程形式
-
-正确解：
 
 令：
 $$
@@ -375,6 +394,8 @@ Suppose in a given network, all edges are undirected (or think of every edge as 
 
 ### Solution
 
+**Give up**
+
 # 2016
 
 ## 01
@@ -399,7 +420,7 @@ s.t. \quad x + \frac{y}{2} \geq \frac{1}{2} \\
 \quad x,y \geq 0
 $$
 
-> 用画图的方式得到最优解，还有其他方法吗= =
+> 用画图的方式得到最优解，或者单纯形法……
 
 原问题：(8/5,7/5) (max = ‐2/5)
 
@@ -414,6 +435,22 @@ Find a polynomial time 4/3‐approximation algorithm for instance of **Metric TS
 *Hint:* The 2‐match problem (find a minimum weight subset of edges 􏰀 such that each node is adjacent to exactly 2 edges in 􏰀) can be solved in polynomial time.
 
 ### Solution
+
+所谓 2-match problem 是指说对于一个图，找到一个花费最小的边的子集使得图中的每个节点连接2条边（即每个节点的度数为2）
+
+于是本题使用如下算法：
+
+1. 对图 $G=(V,E)$ 使用最小 $2-match$ 算法；
+2. 如果得到的结果是唯一一个连通图的，则该结果是所求结果；否则，对于 $k$ 个连通图，每个连通图任选一条边，将其删除，再把它们相连。
+
+先证明这个算法的正确性，对于一个 $2-match$ 算法，每个节点的度数为2。如果连通图个数为1，那么这个结果必为一个TSP的解；如果是 $k$ 个连通图，经过算法处理后，每个节点的度数依旧为2，因此这个结果依旧是一个TSP的解。
+
+当连通图数目为1时，$2-match$ 算法的解即为最佳解，即 $ANS=OPT$
+
+当联通数目为 $k$ 时，因为一个连通图的节点个数最小为3个，所以有 $k\leq\frac{n}{3}$。对于操作，"对于 $k$ 个连通图，每个连通图任选一条边，将其删除，再把它们相连"，因此 $k$ 个连通图会删除 $k$ 条边，并再添加 $k$ 条边。由于每条边的大小为1或2，因此有可能每个删除了 $k$ 条大小为1的边，添加了 $k$ 条大小为2的边，因此至多结果比原来大 $k$。因此，得到：
+$$
+ANS \leq OPT+k\leq OPT + \frac{n}{3}\leq OPT+ \frac{1}{3}OPT\leq \frac{4}{3}OPT
+$$
 
 ## 03
 
@@ -447,23 +484,23 @@ Prove that the **Graph‐Isomorphism problem** is a NP problem.
 
 由题意得整数线性方程：
 $$
-Min\quad\sum_{S_i\in S}cost(S)\cdot x_{s_i} \\
-subject\;to\quad\forall e\in U\quad\sum_{S:a\in S}x_s\geq r_e \\
-\quad\quad\quad\forall S_i\in S\quad x_s\in N
+Min\quad\sum_{S_i\in S}cost(S_i)\cdot x_{s_i} \\
+subject\;to\quad\forall e_j\in U\quad\sum_{S_i:e_j\in S_i}x_{s_i}\geq r_{e_j} \\
+\quad\quad\quad\forall S_i\in S\quad x_{s_i}\in N
 $$
-这里第一个约束条件的意思是对于所有集合中的元素 $e$，每个元素至少出现 $ r_e$次，$x_s$ 代表出现集合 $S$ 出现的次数，即包含元素 $a$ 的集合出现次数总和大于等于 $r_e$ 次。
+这里第一个约束条件的意思是对于所有集合中的元素 $e$，每个元素 $e_j$ 至少出现 $ r_{e_j}$次，$x_{s_i}$ 代表出现集合 $S_i $ 出现的次数，即包含元素 $e_j$ 的集合出现次数总和大于等于 $r_{e_j}$ 次。
 
 易得对应的LP：
 $$
-Min\quad\sum_{S_i\in S}cost(S)\cdot x_{s_i} \\
-subject\;to\quad\forall e\in U\quad\sum_{S:a\in S}x_s\geq r_e \\
-\quad\quad\quad\forall S_i\in S\quad x_s\geq 0
+Min\quad\sum_{S_i\in S}cost(S_i)\cdot x_{s_i} \\
+subject\;to\quad\forall e_j\in U\quad\sum_{S_i:e_j\in S_i}x_{s_i}\geq r_{e_j} \\
+\quad\quad\quad\forall S_i\in S\quad x_{s_i}\geq 0
 $$
 得到对应的对偶问题：
 $$
-Max \quad \sum_{e\in U}y_e\cdot r_e \\
-subject\;to\quad\forall S_i \in S \quad \sum_{a\in S_i}x_s\leq cost(S) \\
-\forall e \in U \quad y_e \geq 0
+Max \quad \sum_{e_j\in U}y_{e_j}\cdot r_{e_j} \\
+subject\;to\quad\forall S_i \in S \quad \sum_{e_j\in S_i}y_{e_j}\leq cost(S_i) \\
+\forall e_j \in U \quad y_{e_j} \geq 0
 $$
 
 ## 06
@@ -489,7 +526,7 @@ L[i][j]=\left\{
 \begin{array}{lcl}
 0 && if \;i=0\;or\;j=0 \\
 L[i-1][j-1]+1&& x[i]==y[j] \\
-o && o.w.
+0 && o.w.
 \end{array}\right.
 $$
 对应算法为：
@@ -536,11 +573,19 @@ In a **Feedback Vertex Set Problem** we are given a undirected graph $𝐺 = (�
 
 ### Solution
 
-问题在描述，就是对于一个无向图 $G=（V,E)$，每个节点 $v \in V$ 都有一个权重 $w_v$，寻找一个最小权重集合 $𝑆 ⊆ 𝑉$ ，使得 $𝐺[𝑉 \ \backslash 𝑆]$ 是一个森林。
+问题再描述，就是对于一个无向图 $G=（V,E)$，每个节点 $v \in V$ 都有一个权重 $w_v$，寻找一个最小权重集合 $𝑆 ⊆ 𝑉$ ，使得 $𝐺[𝑉 \ \backslash 𝑆]$ 是一个森林。
 
-分析一下这个问题，实际上就是要找到这个图中的所有环，然后把这个环中最小权重的那个节点去掉。这样所有构成的节点集合就是我们所需要的最小权重集合。令 $W$ 为图中所有环的集合，$ c \in W $ 为图中的一个环。得到如下整数线性方程：
+分析一下这个问题，实际上就是要找到这个图中的所有环，然后把这个环中最小权重的那个节点去掉。这样所有构成的节点集合就是我们所需要的最小权重集合。令 $W$ 为图中所有环的集合，$ c_j \in W $ 为图中的一个环。$x_v$ 表示为：
 $$
-Min\quad \sum w_vx_v\\
+x_v=\left\{
+\begin{array}{lcl}
+1 && v\;is\;choosen\;to\;delete \\
+0 && v\;is\;not \\
+\end{array}\right.
+$$
+得到如下整数线性方程：
+$$
+Min\quad \sum_{v\in V} w_vx_v\\
 \forall c_j\in W,\sum_{v_i: v_i \in c_j}x_i \geq 1 \\
 x_i \in \{0,1\}
 $$
@@ -553,7 +598,7 @@ $$
 
 DL:
 $$
-Max\quad \sum_{c\in W} y\\
+Max\quad \sum_{c_j\in W} y\\
 \forall v_i \in V, \sum_{c_j:v_i \in c_j}y_j \leq w_i\\
 y_j\geq0
 $$
@@ -679,4 +724,95 @@ s.t.\quad 2w_1+w_2 \leq 6 \\
 \qquad\quad\; 3w_1+2w_2=9\\
 w_1\geq0
 $$
+
+# Assignment 3
+
+## 04
+
+### Question
+
+Consider the maximum weighted matching problem, where you are given a graph $G = (V, E)$ with nonnegative weights on the edges, and your goal is to find a maximum weight set of edges such that no two edges from the set share a vertex, i.e., they form a matching. It’s known that this problem can be solved exactly in polynomial time. Your task here however, is to give a linear time 2-approximation algorithm.
+
+### Solution
+
+使用贪心算法，算法如下：
+
+1. 将所有边按权重从大到小排序；
+2. 每次按权重从大到小依次选取一个两个端点均未被选中的边。
+
+证明如下：
+
+设 $E_{OPT}$ 为 $OPT$ 选取的最优解的边的集合，其权重和为 $OPT$；
+
+设 $E_{Greedy}$ 为贪心算法选取的边的集合，其权重和为 $G$。
+
+对于  $\forall\;(u,v)\in E_{OPT}$ ：
+
+* 若 $(u,v)\in E_{Greedy}$，显然，$w_{OPT_{(u,v)}}=w_{Greedy_{(u,v)}}$；
+* 若 $(u,v)\notin E_{Greedy}$，则至少有一个 $(u,x)$ 或 $(y,v)$ $\in E_{Greedy}$，否则 $(u,v)\in E_{Greedy}$ :
+  * 若其中一个 $\in E_{Greedy}$，不妨假设 $(u,x)\in E_{Greedy}$，$(y,v)\notin E_{Greedy}$，则 $w_{OPT_{(u,v)}}\leq w_{Greedy_{(u,x)}}$，否则，贪婪算法应该选择边 $(u,v)$；
+  * 若两个都 $\in E_{Greedy}$，则 $w_{OPT_{(u,v)}}\leq Max\{w_{Greedy_{(u,x)}},w_{Greedy_{(y,v)}}\}$
+
+综上，对于 $\forall\;(u,v)\in E_{OPT}$，总能找到一个边 $(a,b)\in E_{Greedy}$，且 $ab$ 中至少有一个节点为 $v$ 或者 $u$，使得 $w_{(a,b)} \geq w_{(u,v)}$。由于对于 $(a,b)\in E_{Greedy}$ 中的每条边，对应的结点至多被找到两次，如 $(u,x)\in E_{Greedy}$ 可能被
+
+$(u,v),(x,y)\in E_{OPT}$ 找到，故有：
+$$
+OPT = \sum_{(u,v)\in E_{OPT}}w_{(u,v)}\leq2\sum_{(a,b)\in E_{Greedy}}w_{(a,b)}=2G
+$$
+
+## 06
+
+### Question
+
+Consider a more restricted algorithm than First-Fit, called Next-Fit, which tries to pack the next item only in the most recently started bin. If it does not fit, it is packed in a new bin. Show that this algorithm also achieves factor 2. Give a factor 2 tight example.
+
+### Solution
+
+假设每个箱子的容量为1，$OPT$ 情况下，用了 $m$ 个箱子，每个箱子重 $w_1,w_2,…,w_m$；$Next-Fit$ 情况下，用了 $n$ 个箱子，每个箱子重 $w'_1,w'_2,…,w'_n$。此时有：
+$$
+w_1+w_2+...+w_m=W_{OPT}=w'_1+w'_2+...+w'_n=W_{Greedy}
+$$
+由于使用了 Next-Fit 策略，说明只有下一个 item 无法装入当前箱子时，才会开一个新箱子，因此当前箱子与下一个箱子的总重量一定大于一个箱子的容量，即：
+$$
+w'_i+w'_{i+1} \geq 1
+$$
+因此，当 $n$ 为偶数时， $n$ 个箱子的总重量一定 $\geq \frac{1}{2}n$，而 $OPT$ 情况下，至多 $m$ 个箱子均为满的，因此 $m\geq W_{OPT}$，所以：
+$$
+\frac{1}{2}n \leq W_{Greedy}=W_{OPT}\leq m\\
+n \leq 2m
+$$
+当 $n$ 为奇数时，有
+$$
+\frac{n-1}{2}+w'_n \leq W_{Greedy}=W_{OPT}\leq m \\
+\therefore n \leq 2m - (1-w'_n) \\
+\because n,m \in N\;\;and\;\;0\leq1-w'_n<1\\
+\therefore n \leq 2m
+$$
+综上，$n\leq2m$，近似比为2，证毕。
+
+## 08
+
+### Question
+
+Given an undirected complete graph, each edge is assigned with a nonnegative cost by the function c. Find a Hamilton cycle with the largest cost by the greedy approach, and prove the guarantee factor is 2.
+
+### Solution
+
+使用如下贪心算法：
+
+找到一个花费最高的边，记为 $(v_1,v_2)$，删除连接 $v_1$ 的所有边，然后作如下循环：
+
+从 $i=2$ 至 $i=n$，找到连接 $v_i$ 的所有边，选择其中花费最高的一条边，记为 $(v_i,v_{i+1})$，删除连接 $v_i$ 的所有边。
+
+最后，连接 $v_nv_1$，得到哈密尔顿环为 $v_nv_1v_2…v_n$。
+
+设最优解为 $u_nu_1u_2…u_n$，对于 $\forall\;u_iu_{i+1}\in OPT $，令 $u_i=v_j,u_{i+1}=v_k$，于是有：
+$$
+u_iu_{i+1}\leq v_jv_{j+1}\;or\;v_kv_{k+1}
+$$
+否则，$u_iu_{i+1}$ 会被贪心算法选中为其中一条边，因此，对于 $u_iu_{i+1}\in OPT$，总能找到一条包含其中至少一个节点的边 $v_iv_{i+1} \geq u_iu_{i+1}$。 又因为 $v_i$ 最多被选中两次，一次为入边节点，一次为出边节点，于是有：
+$$
+\sum u_iu_{i+1} \leq 2\sum v_iv_{i+1}
+$$
+即 $OPT \leq 2G$
 
