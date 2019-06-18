@@ -388,3 +388,4 @@ m(i-1,W)&&if\;w_i>W\\
 Max\{m(i-1,W),v_i+m(i-1,W-w_i)\} && otherwise
 \end{array}\right.
 $$
+
