@@ -99,7 +99,7 @@ PMFS利用处理器特征实现8，16，64字节原子更新
 - 16字节－（使用cmpxchg16b指令）用于文件追加操作时更新索引节点大小以及修改时间；
 - 64字节－（使用RTM）用于修改索引节点的许多域如删除一个索引节点操作。
 
-PMFS使用一种**混合方式**，对小的metadata的更新采用atomic in-place 和 fin-grained logging（发现64字节的缓存行粒度对于元数据更新开销最小），而对于文件数据的更新则采用CoW。 
+PMFS使用一种**混合方式**，对小的比较分散的metadata的更新采用atomic in-place 和 fin-grained logging（发现64字节的缓存行粒度对于元数据更新开销最小），而对于文件数据的更新则采用CoW。 
 
 ![](img/2-5.png)
 
