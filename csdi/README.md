@@ -37,3 +37,5 @@
 * Bugs
   * **Reading**:
   * Notes
+* [Final Review](slides/lec16-review.pdf)
+  * [Notes](notes/final.md)
