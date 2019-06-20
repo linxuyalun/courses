@@ -92,4 +92,4 @@ RAMCloud采用了`Partitioned Recovery`策略，来进行错误恢复。思路�
 对scaling的总结：
 
 - 利用scale去获得高可用性，分散写来克服disk的bottleneck，分散rebuilding来克服CPU和网络的bottleneck
-- Scale驱使了更低的latency
+- Scale驱使了更低的latency我

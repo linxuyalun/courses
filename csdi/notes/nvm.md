@@ -30,9 +30,9 @@
 
 ![](http://upload.wikimedia.org/wikipedia/commons/thumb/a/ad/Write_back_with_write_allocation.png/468px-Write_back_with_write_allocation.png)
 
-这种方法的好处是高效，坏处是比较复杂，比较在从cache到内存中如果出现电流不稳定产生crash，部分的数据可能就没有完成写入（**现在的架构已经解决了这个问题，但是怎么解决的，我不知道**）
+这种方法的好处是高效，坏处是比较复杂，比较在从cache到内存中如果出现电流不稳定产生crash，但是这种crash是可以接受的，因为内存数据本身不考虑持久性，如果发生 crash，内存直接丢掉这些数据就可以了。
 
-当我们使用一个这个新的架构的时候，也会面临这样的问题：
+但是当我们使用一个这个新的架构的时候，也会面临这样的问题，但是这时候由于 NVM 扮演了一个持久化存储的角色，那么就不得不考虑这个问题了：
 
 ![](img/2-3.png)
 
