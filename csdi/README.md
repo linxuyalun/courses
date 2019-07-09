@@ -34,8 +34,8 @@
 * [Graph Query on RDF](slides/lec13-gquery.pdf)
   * **Reading**: [Fast and Concurrent RDF Queries with RDMA-based Distributed Graph Exploration Presentation](https://www.usenix.org/system/files/conference/osdi16/osdi16-shi.pdf)
   * [Notes](notes/graph-query.md)
-* Bugs
-  * **Reading**:
-  * Notes
+* [Bugs](slides/lec14-bugs.pdf)
+  * **Reading**: [Towards Optimization-Safe Systems: Analyzing the Impact of Undefined Behavior](https://people.csail.mit.edu/nickolai/papers/wang-stack.pdf)
 * [Final Review](slides/lec16-review.pdf)
   * [Notes](notes/final.md)
+
