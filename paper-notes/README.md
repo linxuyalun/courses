@@ -1,11 +1,11 @@
 # Contents
 
-## Schedule & Distributed System
+## Resource Management
 
-* [Distributed systems for fun and profit](resource-management-infra/distributed-systems.md)
-* [The Google File System](resource-management-infra/gfs.md)
-* [MapReduce](resource-management-infra/mapreduce.md)
-* [No compromises: distributed transactions with consistency, availability, and performance](resource-management-infra/farm.md)
+* [Distributed systems for fun and profit](resource-management/distributed-systems.md)
+* [The Google File System](resource-management/gfs.md)
+* [MapReduce](resource-management/mapreduce.md)
+* [Spark](resource-management/spark/spark.md)
 * The evolution of cluster scheduler architectures
 * Mesos, Omega, Borg: A Survey
 * Recent Developments in Resource Management in Cloud Computing and Large Computing Clusters. 
@@ -21,6 +21,7 @@
 * Mercury: Hybrid Centralized and Distributed Scheduling in Large Shared Clusters
 * Running Spark on Kubernetes
 * Apache Spark 2.3 with Native Kubernetes Support
+* [No compromises: distributed transactions with consistency, availability, and performance](resource-management/farm.md)
 
 ## Serverless Computing
 
@@ -37,8 +38,8 @@
 * [Microservices Architecture Enables DevOps: Migration to a Cloud-Native Architecture](https://ieeexplore.ieee.org/abstract/document/7436659)
 * [Open Issues in Scheduling Microservices in the Cloud](https://lydiaychen.com/pdf/IEEECloud_microServices.pdf)
 
-## Isolation
+## Virtualization
 
-* [Unikernels vs Containers: An In-Depth Benchmarking Study in the Context of Microservice Applications](isolation/unikernel.md)
-* [My VM is Lighter (and Safer) than your Container](isolation/lightvm.md)
+* [Unikernels vs Containers: An In-Depth Benchmarking Study in the Context of Microservice Applications](virtualization/unikernel.md)
+* [My VM is Lighter (and Safer) than your Container](virtualization/lightvm.md)
 
